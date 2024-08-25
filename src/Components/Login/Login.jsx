@@ -1,22 +1,43 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
-
+  const [bgSize, setBgSize] = useState("");
+  const [bgposition, setbgposition] = useState("");
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
-  return (
-    <div className="login">
-      <img
-        src="https://files.oaiusercontent.com/file-ZDILwlWmp67b9qle5h0zgCj2?se=2024-08-21T08%3A00%3A35Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D604800%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3D237fab4f-8f88-4253-80b1-0fa9bcbcbb29.webp&sig=bcYBPjJqLy2Vpf4WIQGc47hkBb%2BIO2lRkNKusNWnvA4%3D"
-        alt="login image"
-        className="login__img"
-      />
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 640) {
+        setBgSize("175% 100%");
+        setbgposition("38% 47%");
+      } else {
+        setBgSize("112% 144%");
+        setbgposition("15% 47%");
+      }
+    };
 
+    window.addEventListener("resize", handleResize);
+    handleResize(); // Call once to set initial value
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return (
+    <div
+      className="login "
+      style={{
+        backgroundImage: "url('image/1.webp')",
+        backgroundRepeat: "no-repeat",
+        backgroundSize: bgSize,
+        backgroundPosition: bgposition,
+      }}
+    >
       <form action="" className="login__form">
-        <h1 className="login__title">Login</h1>
+        <h1 className="login__title text-neutral-950">Login</h1>
 
         <div className="login__content">
           <div className="login__box">
@@ -30,7 +51,10 @@ function Login() {
                 id="login-email"
                 placeholder=" "
               />
-              <label htmlFor="login-email" className="login__label">
+              <label
+                htmlFor="login-email"
+                className="login__label text-neutral-950"
+              >
                 Email
               </label>
             </div>
@@ -39,7 +63,7 @@ function Login() {
           <div className="login__box">
             <i className="ri-lock-2-line login__icon"></i>
 
-            <div className="login__box-input">
+            <div className="login__box-input  text-neutral-950">
               <input
                 type={showPassword ? "text" : "password"}
                 required
@@ -73,14 +97,15 @@ function Login() {
             </label>
           </div>
 
-          <a href="#" className="login__forgot">
+          <a href="#" className="login__forgot text-neutral-950">
             Forgot Password?
           </a>
         </div>
-
-        <button type="submit" className="login__button">
-          Login
-        </button>
+        <Link to="/member">
+          <button type="submit" className="login__button">
+            Login
+          </button>
+        </Link>
 
         <p className="login__register">
           Don't have an account? <a href="#">Register</a>
