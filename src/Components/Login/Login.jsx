@@ -4,7 +4,8 @@ import { Link } from "react-router-dom";
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [bgSize, setBgSize] = useState("");
-  const [bgposition, setbgposition] = useState("");
+  const [bgPosition, setBgPosition] = useState("");
+
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -13,10 +14,10 @@ function Login() {
     const handleResize = () => {
       if (window.innerWidth <= 640) {
         setBgSize("175% 100%");
-        setbgposition("38% 47%");
+        setBgPosition("38% 47%");
       } else {
         setBgSize("112% 144%");
-        setbgposition("15% 47%");
+        setBgPosition("15% 47%");
       }
     };
 
@@ -28,87 +29,87 @@ function Login() {
 
   return (
     <div
-      className="login "
+      className="relative h-screen grid place-items-center bg-no-repeat"
       style={{
         backgroundImage: "url('image/1.webp')",
-        backgroundRepeat: "no-repeat",
         backgroundSize: bgSize,
-        backgroundPosition: bgposition,
+        backgroundPosition: bgPosition,
       }}
     >
-      <form action="" className="login__form">
-        <h1 className="login__title text-neutral-950">Login</h1>
+      <form className="relative bg-opacity-10 bg-gray-900 backdrop-blur-lg border-2 border-white mx-6 p-8 rounded-lg md:w-[432px]">
+        <h1 className="text-center text-2xl font-medium text-neutral-900 mb-8">
+          Login
+        </h1>
 
-        <div className="login__content">
-          <div className="login__box">
-            <i className="ri-user-3-line login__icon"></i>
-
-            <div className="login__box-input">
+        <div className="grid gap-6 mb-6">
+          <div className="flex items-center border-b-2 border-white gap-3">
+            <i className="ri-user-3-line text-xl"></i>
+            <div className="relative w-full">
               <input
                 type="email"
                 required
-                className="login__input"
+                className="w-full bg-transparent py-2 focus:outline-none placeholder-transparent peer"
                 id="login-email"
-                placeholder=" "
               />
               <label
                 htmlFor="login-email"
-                className="login__label text-neutral-950"
+                className="absolute left-0 top-3 text-neutral-900 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-focus:top-[-12px] peer-focus:text-sm transition-all duration-300"
               >
                 Email
               </label>
             </div>
           </div>
 
-          <div className="login__box">
-            <i className="ri-lock-2-line login__icon"></i>
-
-            <div className="login__box-input  text-neutral-950">
+          <div className="flex items-center border-b-2 border-white gap-3">
+            <i className="ri-lock-2-line text-xl"></i>
+            <div className="relative w-full">
               <input
                 type={showPassword ? "text" : "password"}
                 required
-                className="login__input"
+                className="w-full bg-transparent py-2 focus:outline-none placeholder-transparent peer"
                 id="login-pass"
-                placeholder=" "
               />
-              <label htmlFor="login-pass" className="login__label">
+              <label
+                htmlFor="login-pass"
+                className="absolute left-0 top-3 text-neutral-900 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-focus:top-[-12px] peer-focus:text-sm transition-all duration-300"
+              >
                 Password
               </label>
               <i
                 className={`ri-eye${
                   showPassword ? "" : "-off"
-                }-line login__eye`}
-                id="login-eye"
+                }-line absolute right-0 top-4 cursor-pointer`}
                 onClick={togglePasswordVisibility}
               ></i>
             </div>
           </div>
         </div>
 
-        <div className="login__check">
-          <div className="login__check-group">
-            <input
-              type="checkbox"
-              className="login__check-input"
-              id="login-check"
-            />
-            <label htmlFor="login-check" className="login__check-label">
-              Remember me
-            </label>
-          </div>
+        <div className="flex justify-between items-center mb-6">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" className="w-4 h-4" />
+            <span className="text-sm text-neutral-900">Remember me</span>
+          </label>
 
-          <a href="#" className="login__forgot text-neutral-950">
+          <a href="#" className="text-sm text-neutral-900 hover:underline">
             Forgot Password?
           </a>
         </div>
-        <Link to="/member">
-          <button type="submit" className="login__button">
+
+        <Link to="/Member">
+          <button
+            type="submit"
+            className="w-full py-3 bg-white text-red-600 font-medium rounded-lg mb-6"
+          >
             Login
           </button>
         </Link>
 
-        <p className="login__register">
-          Don't have an account? <a href="#">Register</a>
+        <p className="text-center">
+          Don't have an account?{" "}
+          <a href="#" className="text-white font-medium hover:underline">
+            Register
+          </a>
         </p>
       </form>
     </div>
