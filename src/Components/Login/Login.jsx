@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
   const [bgSize, setBgSize] = useState("");
   const [bgPosition, setBgPosition] = useState("");
+  const [user, setuser] = useState("");
+  const [password, setPassword] = useState("");
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -26,6 +30,14 @@ function Login() {
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const checkLogin = () => {
+    if (user === "admin") {
+      navigate("/pageAdmin");
+    } else {
+      navigate("/member");
+    }
+  };
 
   return (
     <div
@@ -50,6 +62,7 @@ function Login() {
                 required
                 className="w-full bg-transparent py-2 focus:outline-none placeholder-transparent peer"
                 id="login-email"
+                onChange={(event) => setuser(event.target.value)}
               />
               <label
                 htmlFor="login-email"
@@ -96,14 +109,13 @@ function Login() {
           </a>
         </div>
 
-        <Link to="/Member">
-          <button
-            type="submit"
-            className="w-full py-3 bg-white text-red-600 font-medium rounded-lg mb-6"
-          >
-            Login
-          </button>
-        </Link>
+        <button
+          type="submit"
+          onClick={checkLogin}
+          className="w-full py-3 bg-white text-red-600 font-medium rounded-lg mb-6"
+        >
+          Login
+        </button>
 
         <p className="text-center">
           Don't have an account?{" "}
