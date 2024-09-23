@@ -8,7 +8,7 @@ const appointments = [
     owner: "John Doe",
     date: "2024-09-18",
     time: "10:00 AM",
-    status: "Upcoming",
+    status: "มาตามนัด",
   },
   {
     id: 2,
@@ -16,7 +16,7 @@ const appointments = [
     owner: "Jane Smith",
     date: "2024-09-19",
     time: "2:00 PM",
-    status: "Upcoming",
+    status: "มาตามนัด",
   },
   {
     id: 3,
@@ -24,7 +24,7 @@ const appointments = [
     owner: "Chris Evans",
     date: "2024-09-20",
     time: "1:00 PM",
-    status: "Completed",
+    status: "กำลังมา",
   },
 ];
 
@@ -115,7 +115,7 @@ export default function AdminDashboard() {
                     <td className="px-4 py-2">{appointment.time}</td>
                     <td
                       className={`px-4 py-2 ${
-                        appointment.status === "Upcoming"
+                        appointment.status === "มาตามนัด"
                           ? "text-green-500"
                           : "text-gray-500"
                       }`}

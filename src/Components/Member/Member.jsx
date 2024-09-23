@@ -50,9 +50,33 @@ const pets = [
   },
 ];
 
+const petVaccineData = [
+  {
+    disease: "Kennal Cough Syndrome",
+    batchNo: "/path/to/sticker1.png", // URL ของรูปสติกเกอร์
+    dateOfVaccination: "28/06/59",
+    nextVaccination: "28/06/60",
+    stickerImage: "/path/to/sticker1.png", // URL รูปใบวัคซีน
+  },
+  {
+    disease: "Canine Parvovirus",
+    batchNo: "/path/to/sticker2.png",
+    dateOfVaccination: "23/03/60",
+    nextVaccination: "23/03/61",
+    stickerImage: "/path/to/sticker2.png",
+  },
+  {
+    disease: "Canine Distemper, Infectious Hepatitis, Parvovirus",
+    batchNo: "/path/to/sticker3.png",
+    dateOfVaccination: "21/03/60",
+    nextVaccination: "21/03/61",
+    stickerImage: "/path/to/sticker3.png",
+  },
+  // เพิ่มข้อมูลอื่นๆ ตามต้องการ
+];
+
 // การ์ดแสดงข้อมูลสัตว์เลี้ยง
 export default function PetCards() {
-  const defaultImg = "/image/default.png"; // รูปภาพ default ที่ใช้เมื่อไม่มีรูปสัตว์เลี้ยง
   const [selectedPet, setSelectedPet] = useState(null); // เก็บข้อมูลสัตว์เลี้ยงที่เลือก
   const [showModal, setShowModal] = useState(false); // ควบคุมการเปิดปิด modal
   const [showMenuModal, setShowMenuModal] = useState(false); // ควบคุม modal ของเมนูเพิ่ม/แก้ไข
@@ -95,29 +119,40 @@ export default function PetCards() {
         </div>
       </div>
 
-      {/* การ์ดสัตว์เลี้ยง */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
-        {pets.map((pet) => (
-          <button key={pet.id} onClick={() => handleViewHistory(pet)}>
-            <div
-              className="bg-gray-800 text-white shadow-lg rounded-lg overflow-hidden"
-              style={{
-                backgroundImage: `url(${pet.imgSrc ? pet.imgSrc : defaultImg})`,
-                backgroundSize: "60% 90%",
-                backgroundPosition: "center",
-                height: "250px", // ความสูงของการ์ด
-                backgroundRepeat: "no-repeat",
-              }}
-            >
-              <div className="bg-black bg-opacity-50 p-6 h-full flex flex-col justify-end">
-                <h3 className="text-2xl font-semibold mb-2">{pet.name}</h3>
-                <p className="text-gray-300">ประเภท: {pet.type}</p>
-                <p className="text-gray-300">อายุ: {pet.age} ปี</p>
-              </div>
-            </div>
-          </button>
-        ))}
-      </div>
+      {/* ตารางแสดงรายการสัตว์เลี้ยง */}
+      <table className="min-w-full table-auto bg-gray-100 rounded-lg">
+        <thead>
+          <tr className="bg-gray-300">
+            <th className="px-4 py-2 text-left">ชื่อสัตว์เลี้ยง</th>
+            <th className="px-4 py-2 text-left">ประเภท</th>
+            <th className="px-4 py-2 text-left">อายุ</th>
+            <th className="px-4 py-2 text-left">การนัดฉีดวัคซีนครั้งถัดไป</th>
+            <th className="px-4 py-2 text-left">ดูประวัติ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {pets.map((pet) => (
+            <tr key={pet.id} className="border-t">
+              <td className="px-4 py-2">{pet.name}</td>
+              <td className="px-4 py-2">{pet.type}</td>
+              <td className="px-4 py-2">{pet.age} ปี</td>
+              <td className="px-4 py-2">
+                {pet.nextVaccine !== "None"
+                  ? `วันที่: ${pet.nextVaccine}`
+                  : "ไม่มีการนัดครั้งถัดไป"}
+              </td>
+              <td className="px-4 py-2">
+                <button
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                  onClick={() => handleViewHistory(pet)}
+                >
+                  ดูประวัติ
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       {/* Modal เมนูเพิ่ม/แก้ไขสัตว์เลี้ยง */}
       {showMenuModal && (
@@ -151,51 +186,92 @@ export default function PetCards() {
       {/* Modal แสดงประวัติสัตว์เลี้ยงในรูปแบบตาราง */}
       {showModal && selectedPet && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-lg w-full">
+          <div className="bg-white p-6 rounded-lg max-w-5xl w-full">
             <h2 className="text-2xl font-bold mb-4">
-              {selectedPet.name}'s History
+              Vaccination Record for {selectedPet.name}
             </h2>
-            <p className="mb-2">ประเภท: {selectedPet.type}</p>
-            <p className="mb-2">อายุ: {selectedPet.age} ปี</p>
 
-            {/* ตารางแสดงประวัติการฉีดวัคซีน */}
-            <table className="min-w-full table-auto bg-gray-100 rounded-lg">
-              <thead>
-                <tr className="bg-gray-300">
-                  <th className="px-4 py-2 text-left">วันที่</th>
-                  <th className="px-4 py-2 text-left">วัคซีน</th>
-                  <th className="px-4 py-2 text-left">สถานะ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedPet.history.map((entry, index) => (
-                  <tr key={index} className="border-t">
-                    <td className="px-4 py-2">{entry.date}</td>
-                    <td className="px-4 py-2">{entry.vaccine}</td>
-                    <td className="px-4 py-2">
-                      <span
-                        className={`px-2 py-1 rounded-full text-sm ${
-                          entry.status === "Completed"
-                            ? "bg-green-100 text-green-600"
-                            : "bg-red-100 text-red-600"
-                        }`}
-                      >
-                        {entry.status}
-                      </span>
-                    </td>
+            {/* ตารางแสดงข้อมูลการฉีดวัคซีน */}
+            <div className="bg-pink-100 rounded-lg p-6">
+              <table className="min-w-full table-auto border-collapse border border-pink-200">
+                <thead>
+                  <tr className="bg-pink-200">
+                    <th className="px-4 py-2 border border-pink-300">
+                      Vaccination Against
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      Batch No.
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      Date of Vaccination
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      Next Vaccination
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      Sticker
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {petVaccineData.map((entry, index) => (
+                    <tr key={index}>
+                      <td className="px-4 py-2 border border-pink-300">
+                        {entry.disease}
+                      </td>
+                      <td className="px-4 py-2 border border-pink-300">
+                        <img
+                          src={entry.batchNo}
+                          alt={`Batch No. ${index + 1}`}
+                          className="w-12 h-12 object-contain"
+                        />
+                      </td>
+                      <td className="px-4 py-2 border border-pink-300">
+                        {entry.dateOfVaccination}
+                      </td>
+                      <td className="px-4 py-2 border border-pink-300">
+                        {entry.nextVaccination}
+                      </td>
+                      <td className="px-4 py-2 border border-pink-300">
+                        <img
+                          src={entry.stickerImage}
+                          alt={`Sticker for ${entry.disease}`}
+                          className="w-12 h-12 object-contain"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-            {/* เพิ่มการนัดฉีดวัคซีนครั้งถัดไป */}
-            <div className="mt-6">
-              <h3 className="text-xl font-bold">การนัดฉีดวัคซีนครั้งถัดไป</h3>
-              <p className="text-gray-600">
-                {selectedPet.nextVaccine !== "None"
-                  ? `วันที่: ${selectedPet.nextVaccine}`
-                  : "ไม่มีการนัดครั้งถัดไป"}
-              </p>
+            {/* ตารางนัดครั้งถัดไป */}
+            <div className="mt-6 bg-pink-100 rounded-lg p-6">
+              <h3 className="text-xl font-semibold mb-4">
+                Appointment (นัดครั้งถัดไป)
+              </h3>
+              <table className="min-w-full table-auto border-collapse border border-pink-200">
+                <thead>
+                  <tr className="bg-pink-200">
+                    <th className="px-4 py-2 border border-pink-300">Date</th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      Next Appointment
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {petVaccineData.map((entry, index) => (
+                    <tr key={index}>
+                      <td className="px-4 py-2 border border-pink-300">
+                        {entry.dateOfVaccination}
+                      </td>
+                      <td className="px-4 py-2 border border-pink-300">
+                        {entry.nextVaccination}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
             <button

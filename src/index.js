@@ -15,6 +15,7 @@ import AddPet from "./Components/Member/AddPet";
 import EditPet from "./Components/Member/EditPet";
 import Page from "./Components/Admin/page";
 import AdminDashboard from "./Components/Admin/home/AdminDashboard";
+import PetOwners from "./Components/Admin/petOwners";
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
@@ -29,6 +30,7 @@ root.render(
         </Route>
         <Route path="/pageAdmin" element={<Page />}>
           <Route path="Dashboard" element={<AdminDashboard />} />
+          <Route path="PetOwners" element={<PetOwners />} />
         </Route>
       </Routes>
     </Router>
