@@ -15,7 +15,10 @@ import AddPet from "./Components/Member/AddPet";
 import EditPet from "./Components/Member/EditPet";
 import Page from "./Components/Admin/page";
 import AdminDashboard from "./Components/Admin/home/AdminDashboard";
-import PetOwners from "./Components/Admin/petOwners";
+import PageManage from "./Components/Admin/home/PageManage";
+import ManageAnimals from "./Components/Admin/home/MenuManage/ManageAnimals";
+import ManageOwners from "./Components/Admin/home/MenuManage/ManageOwners";
+import ManageDoctorsVets from "./Components/Admin/home/MenuManage/ManageDoctorsVets";
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
@@ -30,7 +33,12 @@ root.render(
         </Route>
         <Route path="/pageAdmin" element={<Page />}>
           <Route path="Dashboard" element={<AdminDashboard />} />
-          <Route path="PetOwners" element={<PetOwners />} />
+          <Route path="PageManage" element={<PageManage />}>
+            <Route path="ManageAnimals" element={<ManageAnimals />} />
+            <Route path="ManageOwners" element={<ManageOwners />} />
+            <Route path="ManageDoctorsVets" element={<ManageDoctorsVets />} />
+
+          </Route>
         </Route>
       </Routes>
     </Router>
