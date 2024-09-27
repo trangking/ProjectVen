@@ -7,8 +7,8 @@ export default function Manage() {
   const location = useLocation();
 
   useEffect(() => {
-    if (location.pathname === "/pageadmin/PageManage") {
-      navigate("/pageadmin/PageManage/ManageAnimals");
+    if (location.pathname === "/pageAdmin/PageManage") {
+      navigate("/pageAdmin/PageManage/ManageAnimals");
     }
   }, [location, navigate]);
 

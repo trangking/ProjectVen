@@ -19,6 +19,8 @@ import PageManage from "./Components/Admin/home/PageManage";
 import ManageAnimals from "./Components/Admin/home/MenuManage/ManageAnimals";
 import ManageOwners from "./Components/Admin/home/MenuManage/ManageOwners";
 import ManageDoctorsVets from "./Components/Admin/home/MenuManage/ManageDoctorsVets";
+import DrugManage from "./Components/Admin/home/drugMange";
+import Appointment from "./Components/Admin/home/Appointment";
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
@@ -37,8 +39,9 @@ root.render(
             <Route path="ManageAnimals" element={<ManageAnimals />} />
             <Route path="ManageOwners" element={<ManageOwners />} />
             <Route path="ManageDoctorsVets" element={<ManageDoctorsVets />} />
-
           </Route>
+          <Route path="DrugManage" element={<DrugManage />} />
+          <Route path="/pageAdmin/Appointment" element={<Appointment />} />
         </Route>
       </Routes>
     </Router>

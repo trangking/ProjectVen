@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 
 // ข้อมูลการนัดหมายตัวอย่าง
 const appointments = [
@@ -46,6 +47,12 @@ export default function AdminDashboard() {
     )
   );
 
+  // ฟังก์ชันสำหรับยกเลิกการนัดหมาย
+  const handleCancelAppointment = (id) => {
+    console.log("ยกเลิกการนัดหมาย ID:", id);
+    // สามารถเพิ่มโค้ดเพื่อจัดการกับการยกเลิกที่นี่ เช่น อัปเดตข้อมูล, API call เป็นต้น
+  };
+
   return (
     <>
       {/* Section 1: ข้อมูลสถิติ */}
@@ -87,12 +94,11 @@ export default function AdminDashboard() {
           </h2>
 
           {/* ปุ่มสำหรับเพิ่มการนัดหมาย */}
-          <button
-            className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-6 py-2 rounded-full shadow-lg hover:from-purple-600 hover:to-indigo-600 transition-transform transform hover:scale-105"
-            onClick={() => alert("เพิ่มการนัดหมายใหม่")}
-          >
-            + เพิ่มการนัดหมาย
-          </button>
+          <Link to="/pageAdmin/Appointment">
+            <button className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-6 py-2 rounded-full shadow-lg hover:from-purple-600 hover:to-indigo-600 transition-transform transform hover:scale-105">
+              + เพิ่มการนัดหมาย
+            </button>
+          </Link>
         </div>
 
         {/* ช่องค้นหา */}
@@ -113,6 +119,7 @@ export default function AdminDashboard() {
                 <th className="px-2 py-1 text-left">วันที่</th>
                 <th className="px-2 py-1 text-left">เวลา</th>
                 <th className="px-2 py-1 text-left">สถานะ</th>
+                <th className="px-2 py-1 text-left">การจัดการ</th>
               </tr>
             </thead>
             <tbody>
@@ -132,11 +139,23 @@ export default function AdminDashboard() {
                     >
                       {appointment.status}
                     </td>
+                    <td className="px-2 py-1">
+                      {appointment.status === "กำลังมา" && (
+                        <button
+                          onClick={() =>
+                            handleCancelAppointment(appointment.id)
+                          }
+                          className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-400 transition"
+                        >
+                          ยกเลิกนัด
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="text-center py-4">
+                  <td colSpan="6" className="text-center py-4">
                     ไม่พบการนัดหมาย
                   </td>
                 </tr>

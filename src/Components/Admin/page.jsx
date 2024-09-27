@@ -8,7 +8,7 @@ import {
   MenuIcon,
 } from "@heroicons/react/outline";
 import { Outlet } from "react-router-dom";
-
+import { FaMedkit, FaSignOutAlt } from "react-icons/fa";
 // ลิงก์ของ Sidebar
 const sidebarLinks = [
   {
@@ -17,19 +17,19 @@ const sidebarLinks = [
     icon: <CalendarIcon className="h-6 w-6" />,
   },
   {
-    name: "จัดการเมนู",
+    name: "จัดการข้อมูล",
     path: "PageManage",
     icon: <UserGroupIcon className="h-6 w-6" />,
   },
   {
-    name: "การแจ้งเตือน",
-    path: "/admin/notifications",
-    icon: <BellIcon className="h-6 w-6" />,
+    name: "วัคซีน",
+    path: "DrugManage",
+    icon: <FaMedkit className="h-6 w-6" />,
   },
   {
-    name: "การตั้งค่า",
-    path: "/admin/settings",
-    icon: <CogIcon className="h-6 w-6" />,
+    name: "ออกจากระบบ",
+    path: "/",
+    icon: <FaSignOutAlt className="h-6 w-6" />,
   },
 ];
 
