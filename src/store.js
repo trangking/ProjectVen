@@ -12,6 +12,11 @@ const useStore = create((set) => ({
 
   addAddressMember: "",
   setAddressMember: (AddressMember) => set({ addAddressMember: AddressMember }),
+
+  email: "",
+  password: "",
+  setEmail: (email) => set({ email }),
+  setPassword: (password) => set({ password }),
 }));
 
 export default useStore;

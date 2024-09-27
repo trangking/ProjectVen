@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { signInWithEmailAndPassword } from "firebase/auth"; // import Firebase authentication
+import { auth } from "../../firebase/firebase"; // นำเข้า auth จาก Firebase
+import useStore from "../../store"; // import useStore
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const [bgSize, setBgSize] = useState("");
   const [bgPosition, setBgPosition] = useState("");
-  const [user, setuser] = useState("");
-  const [password, setPassword] = useState("");
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+  const email = useStore((state) => state.email);
+  const password = useStore((state) => state.password);
+  const setEmail = useStore((state) => state.setEmail);
+  const setPassword = useStore((state) => state.setPassword);
 
   useEffect(() => {
     const handleResize = () => {
@@ -31,95 +31,113 @@ function Login() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const checkLogin = () => {
-    if (user === "admin") {
-      navigate("/pageAdmin");
-    } else {
-      navigate("/member");
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const checkLogin = async (event) => {
+    event.preventDefault();
+
+    try {
+      // เข้าสู่ระบบ Firebase ด้วย email และ password
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      // ตรวจสอบ UID
+      const userId = userCredential.user.uid;
+      console.log("User UID:", userId);
+
+      // ถ้า UID ตรงกับ 'XQisYFDzRueY6uwH5bUmuPIeUVI2' ให้ไปหน้า Admin
+      if (userId === "XQisYFDzRueY6uwH5bUmuPIeUVI2") {
+        navigate("/pageAdmin");
+      } else {
+        // ถ้าไม่ตรงกับ UID ที่ระบุ ให้นำไปที่หน้า Member
+        navigate("/member");
+      }
+    } catch (error) {
+      console.error("เกิดข้อผิดพลาดในการเข้าสู่ระบบ:", error);
+      alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
     }
   };
 
   return (
     <div
-      className="relative h-screen grid place-items-center bg-no-repeat"
+      className="relative h-screen grid place-items-center bg-no-repeat bg-cover"
       style={{
         backgroundImage: "url('image/1.webp')",
         backgroundSize: bgSize,
         backgroundPosition: bgPosition,
       }}
     >
-      <form className="relative bg-opacity-10 bg-gray-900 backdrop-blur-lg border-2 border-white mx-6 p-8 rounded-lg md:w-[432px]">
-        <h1 className="text-center text-2xl font-medium text-neutral-900 mb-8">
-          Login
+      <form
+        className="relative bg-opacity-70 bg-white backdrop-blur-lg border border-gray-200 p-10 rounded-lg shadow-lg max-w-lg w-full"
+        onSubmit={checkLogin} // ใช้ checkLogin เมื่อผู้ใช้กดปุ่ม Login
+      >
+        <h1 className="text-center text-4xl font-semibold text-gray-800 mb-6">
+          Welcome
         </h1>
+        <p className="text-center text-gray-600 mb-10">
+          Sign in to your account
+        </p>
 
-        <div className="grid gap-6 mb-6">
-          <div className="flex items-center border-b-2 border-white gap-3">
-            <i className="ri-user-3-line text-xl"></i>
-            <div className="relative w-full">
-              <input
-                type="email"
-                required
-                className="w-full bg-transparent py-2 focus:outline-none placeholder-transparent peer"
-                id="login-email"
-                onChange={(event) => setuser(event.target.value)}
-              />
-              <label
-                htmlFor="login-email"
-                className="absolute left-0 top-3 text-neutral-900 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-focus:top-[-12px] peer-focus:text-sm transition-all duration-300"
-              >
-                Email
-              </label>
-            </div>
+        <div className="space-y-6">
+          {/* ช่องกรอกอีเมล */}
+          <div className="relative">
+            <input
+              type="email"
+              required
+              className="w-full px-4 py-3 bg-gray-100 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+              placeholder="Email"
+              id="login-email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)} // อัปเดต email ใน useStore
+            />
+            <i className="ri-mail-line absolute right-3 top-3 text-gray-400"></i>
           </div>
 
-          <div className="flex items-center border-b-2 border-white gap-3">
-            <i className="ri-lock-2-line text-xl"></i>
-            <div className="relative w-full">
-              <input
-                type={showPassword ? "text" : "password"}
-                required
-                className="w-full bg-transparent py-2 focus:outline-none placeholder-transparent peer"
-                id="login-pass"
-              />
-              <label
-                htmlFor="login-pass"
-                className="absolute left-0 top-3 text-neutral-900 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-focus:top-[-12px] peer-focus:text-sm transition-all duration-300"
-              >
-                Password
-              </label>
-              <i
-                className={`ri-eye${
-                  showPassword ? "" : "-off"
-                }-line absolute right-0 top-4 cursor-pointer`}
-                onClick={togglePasswordVisibility}
-              ></i>
-            </div>
+          {/* ช่องกรอกรหัสผ่าน */}
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              className="w-full px-4 py-3 bg-gray-100 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+              placeholder="Password"
+              id="login-pass"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)} // อัปเดต password ใน useStore
+            />
+            <i
+              className={`ri-eye${
+                showPassword ? "" : "-off"
+              }-line absolute right-3 top-3 text-gray-400 cursor-pointer`}
+              onClick={togglePasswordVisibility}
+            ></i>
           </div>
         </div>
 
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mt-6">
           <label className="flex items-center gap-2">
             <input type="checkbox" className="w-4 h-4" />
-            <span className="text-sm text-neutral-900">Remember me</span>
+            <span className="text-sm text-gray-600">Remember me</span>
           </label>
-
-          <a href="#" className="text-sm text-neutral-900 hover:underline">
+          <a href="#" className="text-sm text-blue-500 hover:underline">
             Forgot Password?
           </a>
         </div>
 
         <button
           type="submit"
-          onClick={checkLogin}
-          className="w-full py-3 bg-white text-red-600 font-medium rounded-lg mb-6"
+          className="w-full py-3 mt-8 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition"
         >
           Login
         </button>
 
-        <p className="text-center">
+        <p className="text-center mt-6 text-gray-600">
           Don't have an account?{" "}
-          <a href="#" className="text-white font-medium hover:underline">
+          <a href="#" className="text-blue-500 font-medium hover:underline">
             Register
           </a>
         </p>
