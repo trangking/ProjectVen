@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { db } from "../../firebase/firebase";
+import { collection, addDoc } from "firebase/firestore";
 
 export default function AddPet() {
   const [petName, setPetName] = useState("");
@@ -12,6 +14,22 @@ export default function AddPet() {
     e.preventDefault();
     alert("สัตว์เลี้ยงของคุณถูกเพิ่มแล้ว!");
     navigate("/member");
+  };
+  const createNewCollection = async () => {
+    try {
+      const docRef = await addDoc(collection(db, "appointments"), {
+        hn: "001",
+        petName: "Buddy",
+        ownerName: "John Doe",
+        doctorName: "Dr. Smith",
+        phoneNumber: "123-456-7890",
+        appointmentTime: "2024-09-30T14:00:00",
+      });
+
+      console.log("Document written with ID: ", docRef.id);
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    }
   };
 
   return (
@@ -102,6 +120,7 @@ export default function AddPet() {
           </div>
 
           <button
+            onClick={createNewCollection}
             type="submit"
             className="w-full bg-green-500 text-white font-semibold py-2 rounded-lg hover:bg-green-600 transition duration-300"
           >
