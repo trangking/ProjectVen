@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/outline";
 import { Outlet } from "react-router-dom";
 import { FaMedkit, FaSignOutAlt } from "react-icons/fa";
+import useStore from "../../store";
 // ลิงก์ของ Sidebar
 const sidebarLinks = [
   {
@@ -37,12 +38,26 @@ export default function Page() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     if (location.pathname === "/pageAdmin") {
       navigate("/pageAdmin/Dashboard");
     }
   }, [location, navigate]);
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/"); // ถ้าไม่มี token ให้นำผู้ใช้กลับไปที่หน้าแรกหรือหน้าเข้าสู่ระบบ
+    }
+    const timer = setTimeout(() => {
+      localStorage.removeItem("token");
+      alert("หมดเวลาเซสชั่น 1 ชั่วโมง กรุณาเข้าสู่ระบบใหม่");
+      navigate("/");
+    }, 3600000);
+
+    return () => clearTimeout(timer);
+  }, [token, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">

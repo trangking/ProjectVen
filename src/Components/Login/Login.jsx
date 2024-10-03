@@ -13,7 +13,8 @@ function Login() {
   const password = useStore((state) => state.password);
   const setEmail = useStore((state) => state.setEmail);
   const setPassword = useStore((state) => state.setPassword);
-
+  const settoken = useStore((state) => state.settoken);
+  const token = useStore((state) => state.token);
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 640) {
@@ -39,23 +40,25 @@ function Login() {
     event.preventDefault();
 
     try {
-      // เข้าสู่ระบบ Firebase ด้วย email และ password
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
         password
       );
 
-      // ตรวจสอบ UID
-      const userId = userCredential.user.uid;
-      console.log("User UID:", userId);
+      // ดึง token ของผู้ใช้
+      const tokenResult = await userCredential.user.getIdTokenResult();
+      const token = tokenResult.token;
 
-      // ถ้า UID ตรงกับ 'XQisYFDzRueY6uwH5bUmuPIeUVI2' ให้ไปหน้า Admin
+      // บันทึก token ลงใน localStorage
+      localStorage.setItem("token", token);
+      console.log("Token ถูกบันทึกลงใน localStorage:", token);
+      const userId = userCredential.user.uid;
+      // ตรวจสอบว่าเป็น admin หรือไม่
       if (userId === "XQisYFDzRueY6uwH5bUmuPIeUVI2") {
-        navigate("/pageAdmin");
+        navigate("/pageAdmin"); // ถ้าเป็นแอดมินให้ไปที่หน้า Admin
       } else {
-        // ถ้าไม่ตรงกับ UID ที่ระบุ ให้นำไปที่หน้า Member
-        navigate("/member");
+        navigate("/member"); // ถ้าไม่ใช่แอดมินให้ไปที่หน้า Member
       }
     } catch (error) {
       console.error("เกิดข้อผิดพลาดในการเข้าสู่ระบบ:", error);

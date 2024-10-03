@@ -17,6 +17,9 @@ const useStore = create((set) => ({
   password: "",
   setEmail: (email) => set({ email }),
   setPassword: (password) => set({ password }),
+
+  token: "",
+  setToken: (token) => set({ token }),
 }));
 
 export default useStore;

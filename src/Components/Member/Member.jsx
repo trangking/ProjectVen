@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 // ข้อมูลตัวอย่างของสัตว์เลี้ยง
 const pets = [
@@ -80,6 +80,8 @@ export default function PetCards() {
   const [selectedPet, setSelectedPet] = useState(null); // เก็บข้อมูลสัตว์เลี้ยงที่เลือก
   const [showModal, setShowModal] = useState(false); // ควบคุมการเปิดปิด modal
   const [showMenuModal, setShowMenuModal] = useState(false); // ควบคุม modal ของเมนูเพิ่ม/แก้ไข
+  const token = localStorage.getItem("token");
+  const navigate = useNavigate();
 
   const handleViewHistory = (pet) => {
     setSelectedPet(pet); // กำหนดสัตว์เลี้ยงที่ถูกเลือก
@@ -98,6 +100,19 @@ export default function PetCards() {
   const handleCloseMenuModal = () => {
     setShowMenuModal(false); // ปิด modal ของเมนูเพิ่ม/แก้ไข
   };
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/"); // ถ้าไม่มี token ให้นำผู้ใช้กลับไปที่หน้าแรกหรือหน้าเข้าสู่ระบบ
+    }
+    const timer = setTimeout(() => {
+      localStorage.removeItem("token");
+      alert("หมดเวลาเซสชั่น 1 ชั่วโมง กรุณาเข้าสู่ระบบใหม่");
+      navigate("/");
+    }, 3600000);
+
+    return () => clearTimeout(timer);
+  }, [token, navigate]);
 
   return (
     <div className="container mx-auto mt-8">

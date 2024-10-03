@@ -1,11 +1,26 @@
 import React, { useState } from "react";
+import { Select, Input, Button } from "antd";
+
+const { Option } = Select;
+
+// ข้อมูลพันธุ์ของสัตว์
+const dogBreeds = ["Golden Retriever", "Labrador", "Poodle", "Bulldog"];
+const catBreeds = ["Siamese", "Persian", "Maine Coon", "Bengal"];
+const exoticBreeds = ["Snake", "Lizard", "Tortoise", "Parrot"];
 
 export default function ManageAnimals() {
   const [pets, setPets] = useState([
     { name: "Buddy", type: "Dog", age: 2 },
     { name: "Whiskers", type: "Cat", age: 3 },
   ]);
-  const [newPet, setNewPet] = useState({ name: "", type: "", age: "" });
+
+  const [newPet, setNewPet] = useState({
+    name: "",
+    type: "",
+    subType: "",
+    years: "",
+    months: "",
+  });
   const [editIndex, setEditIndex] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -14,7 +29,7 @@ export default function ManageAnimals() {
       setNewPet(pets[index]);
       setEditIndex(index);
     } else {
-      setNewPet({ name: "", type: "", age: "" });
+      setNewPet({ name: "", type: "", subType: "", years: "", months: "" });
       setEditIndex(null);
     }
     setIsModalOpen(true);
@@ -22,11 +37,12 @@ export default function ManageAnimals() {
 
   const closeModal = () => {
     setIsModalOpen(false);
-    setNewPet({ name: "", type: "", age: "" });
+    setNewPet({ name: "", type: "", subType: "", years: "", months: "" });
   };
 
   const handleAddOrUpdatePet = () => {
-    if (!newPet.name || !newPet.type || !newPet.age) return;
+    if (!newPet.name || !newPet.type || (!newPet.years && !newPet.months))
+      return;
 
     if (editIndex !== null) {
       const updatedPets = [...pets];
@@ -43,19 +59,47 @@ export default function ManageAnimals() {
     setPets(updatedPets);
   };
 
+  const breedOptions = () => {
+    switch (newPet.type) {
+      case "Dog":
+        return dogBreeds.map((breed) => (
+          <Option key={breed} value={breed}>
+            {breed}
+          </Option>
+        ));
+      case "Cat":
+        return catBreeds.map((breed) => (
+          <Option key={breed} value={breed}>
+            {breed}
+          </Option>
+        ));
+      case "Exotic":
+        return exoticBreeds.map((breed) => (
+          <Option key={breed} value={breed}>
+            {breed}
+          </Option>
+        ));
+      default:
+        return null;
+    }
+  };
+
   return (
     <>
-      <div className="w-full p-10 flex flex-col items-center ">
-        <h1 className="text-3xl font-bold mb-8 text-green-600">จัดการสัตว์เลี้ยง</h1>
+      <div className="w-full p-10 flex flex-col items-center">
+        <h1 className="text-3xl font-bold mb-8 text-green-600">
+          จัดการสัตว์เลี้ยง
+        </h1>
 
         {/* ปุ่มเพิ่มสัตว์เลี้ยง */}
         <div className="flex justify-end mb-8 w-full max-w-4xl">
-          <button
+          <Button
+            type="primary"
             className="bg-green-500 text-white py-3 px-6 rounded-lg shadow-md hover:bg-green-600 transition-transform transform hover:scale-105"
             onClick={() => openModal()}
           >
             + เพิ่มสัตว์เลี้ยงใหม่
-          </button>
+          </Button>
         </div>
 
         {/* ตารางสัตว์เลี้ยง */}
@@ -77,7 +121,7 @@ export default function ManageAnimals() {
                 >
                   <td className="py-4 px-6">{pet.name}</td>
                   <td className="py-4 px-6">{pet.type}</td>
-                  <td className="py-4 px-6">{pet.age}</td>
+                  <td className="py-4 px-6">{pet.age} ปี</td>
                   <td className="py-4 px-6">
                     <button
                       className="text-green-500 hover:text-green-600 mr-4"
@@ -99,47 +143,73 @@ export default function ManageAnimals() {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal สำหรับเพิ่มหรือแก้ไขสัตว์เลี้ยง */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h2 className="text-2xl font-semibold mb-4 text-green-600">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-60 flex justify-center items-center">
+          <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-lg relative">
+            <h2 className="text-center text-2xl font-bold text-green-600 mt-6 mb-6">
               {editIndex !== null ? "แก้ไขสัตว์เลี้ยง" : "เพิ่มสัตว์เลี้ยงใหม่"}
             </h2>
-            <input
-              type="text"
-              placeholder="ชื่อสัตว์เลี้ยง"
-              className="w-full p-3 mb-4 border rounded-lg"
-              value={newPet.name}
-              onChange={(e) => setNewPet({ ...newPet, name: e.target.value })}
-            />
-            <input
-              type="text"
-              placeholder="ประเภท"
-              className="w-full p-3 mb-4 border rounded-lg"
-              value={newPet.type}
-              onChange={(e) => setNewPet({ ...newPet, type: e.target.value })}
-            />
-            <input
-              type="number"
-              placeholder="อายุ"
-              className="w-full p-3 mb-4 border rounded-lg"
-              value={newPet.age}
-              onChange={(e) => setNewPet({ ...newPet, age: e.target.value })}
-            />
-            <div className="flex justify-end">
-              <button
-                className="bg-gray-500 text-white py-2 px-4 rounded-lg mr-2"
-                onClick={closeModal}
+
+            {/* ฟอร์มสำหรับกรอกข้อมูล */}
+            <div className="space-y-4">
+              <Input
+                placeholder="ชื่อสัตว์เลี้ยง"
+                value={newPet.name}
+                onChange={(e) => setNewPet({ ...newPet, name: e.target.value })}
+              />
+
+              {/* Dropdown สำหรับประเภทสัตว์ */}
+              <Select
+                placeholder="เลือกประเภทสัตว์"
+                value={newPet.type}
+                onChange={(value) => setNewPet({ ...newPet, type: value })}
+                className="w-full"
               >
-                ยกเลิก
-              </button>
-              <button
-                className="bg-green-500 text-white py-2 px-4 rounded-lg"
-                onClick={handleAddOrUpdatePet}
-              >
+                <Option value="Dog">หมา</Option>
+                <Option value="Cat">แมว</Option>
+                <Option value="Exotic">สัตว์เอ็กโซติก</Option>
+              </Select>
+
+              {/* Dropdown สำหรับประเภทย่อย */}
+              {newPet.type && (
+                <Select
+                  placeholder={`เลือกพันธุ์${newPet.type}`}
+                  value={newPet.subType}
+                  onChange={(value) => setNewPet({ ...newPet, subType: value })}
+                  className="w-full"
+                >
+                  {breedOptions()}
+                </Select>
+              )}
+
+              {/* อายุของสัตว์ */}
+              <div className="flex space-x-4">
+                <Input
+                  type="number"
+                  placeholder="ปี"
+                  value={newPet.years}
+                  onChange={(e) =>
+                    setNewPet({ ...newPet, years: e.target.value })
+                  }
+                />
+                <Input
+                  type="number"
+                  placeholder="เดือน"
+                  value={newPet.months}
+                  onChange={(e) =>
+                    setNewPet({ ...newPet, months: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            {/* ปุ่มใน Modal */}
+            <div className="flex justify-between items-center mt-8">
+              <Button onClick={closeModal}>ยกเลิก</Button>
+              <Button type="primary" onClick={handleAddOrUpdatePet}>
                 {editIndex !== null ? "อัปเดต" : "เพิ่ม"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
