@@ -1,17 +1,18 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useStore from "../../../../store";
 import { Select } from "antd";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../../../../firebase/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import {
+  fecthOwners,
+  fetchedPets,
+  AddOwnerToFirebase,
+  updateOwnerInFirebase,
+  deleteOwnerInFirebase,
+} from "../../../../firebase/firebase";
 
 export default function ManageOwners() {
-  const [owners, setOwners] = useState([
-    { name: "John Doe", contact: "john@example.com", pets: 2 },
-    { name: "Jane Smith", contact: "jane@example.com", pets: 3 },
-  ]);
   const [editIndex, setEditIndex] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPetId, setSelectedPetId] = useState(null); // Store selected pet ID
 
   const addMember = useStore((state) => state.addMember);
   const setAddMember = useStore((state) => state.setAddMember);
@@ -25,6 +26,27 @@ export default function ManageOwners() {
   const addAddressMember = useStore((state) => state.addAddressMember);
   const setAddressMember = useStore((state) => state.setAddressMember);
 
+  const owners = useStore((state) => state.Owners);
+  const setOwners = useStore((state) => state.setOwners);
+
+  const pets = useStore((state) => state.pets);
+  const setPets = useStore((state) => state.setPets);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const fetchedOwners = await fecthOwners();
+        const fetchedPet = await fetchedPets();
+        setOwners(fetchedOwners);
+        setPets(fetchedPet);
+      } catch (error) {
+        console.error("Error fetching owners: ", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const { Option } = Select;
 
   const openModal = (index = null) => {
@@ -34,12 +56,15 @@ export default function ManageOwners() {
       setEmailMember(selectedOwner.contact);
       setPhoneMember(selectedOwner.phone || "");
       setAddressMember(selectedOwner.address || "");
+      setSelectedPetId(selectedOwner.petId || null); // Set selected pet ID
       setEditIndex(index);
     } else {
+      // Reset values for adding new owner
       setAddMember("");
       setEmailMember("");
       setPhoneMember("");
       setAddressMember("");
+      setSelectedPetId(null);
       setEditIndex(null);
     }
     setIsModalOpen(true);
@@ -51,54 +76,79 @@ export default function ManageOwners() {
     setEmailMember("");
     setPhoneMember("");
     setAddressMember("");
+    setSelectedPetId(null); // Reset pet selection
   };
 
+  // Handle adding a new owner
   const handleAddOwner = async () => {
-    if (!addMember || !addEmailMember || !addPhoneMember) return;
-
-    const newOwnerData = {
-      name: addMember,
-      contact: addEmailMember,
-      phone: addPhoneMember,
-      address: addAddressMember,
-    };
+    if (!addMember || !addEmailMember || !addPhoneMember || !selectedPetId)
+      return;
 
     try {
-      // สร้างผู้ใช้ใหม่ใน Firebase Authentication โดยใช้ email และ password (เบอร์โทร)
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
+      await AddOwnerToFirebase(
+        addMember,
         addEmailMember,
-        addPhoneMember
+        addPhoneMember,
+        addAddressMember,
+        selectedPetId,
+        owners,
+        setOwners
       );
-
-      // ดึง userId จากผู้ใช้ที่ถูกสร้าง
-      const userId = userCredential.user.uid;
-
-      // เก็บข้อมูลเพิ่มเติมของผู้ใช้ใหม่ใน Firestore
-      await setDoc(doc(db, "owners", userId), newOwnerData);
-
-      // อัปเดต state ของ owners เพื่อแสดงใน UI
-      setOwners([...owners, { ...newOwnerData, id: userId }]);
-
-      closeModal(); // ปิด modal หลังจากเพิ่มข้อมูลเสร็จสิ้น
+      closeModal();
     } catch (error) {
-      console.error("เกิดข้อผิดพลาดในการสมัครสมาชิก:", error);
+      console.error("Error adding owner:", error);
     }
   };
 
-  const handleDeleteOwner = (index) => {
+  // Handle updating an existing owner
+  const handleUpdateOwner = async () => {
+    if (!addMember || !addEmailMember || !addPhoneMember || !selectedPetId)
+      return;
+
+    try {
+      const ownerId = owners[editIndex].id;
+      const previousPetId = owners[editIndex].petId; // เก็บค่า petId ก่อนหน้า
+
+      const updatedOwnerData = {
+        name: addMember,
+        contact: addEmailMember,
+        phone: addPhoneMember,
+        address: addAddressMember,
+        petId: selectedPetId,
+      };
+
+      await updateOwnerInFirebase(
+        ownerId,
+        updatedOwnerData,
+        previousPetId, // petId ก่อนหน้า
+        selectedPetId // petId ใหม่
+      );
+
+      const updatedOwners = [...owners];
+      updatedOwners[editIndex] = { ...updatedOwnerData, id: ownerId };
+      setOwners(updatedOwners);
+      closeModal();
+    } catch (error) {
+      console.error("Error updating owner:", error);
+    }
+  };
+
+  const handleDeleteOwner = async (index) => {
+    const ownerId = owners[index].id;
+    const ownerAuthId = owners[index].authId; // เก็บค่า authId (uid) ของเจ้าของ
+    await deleteOwnerInFirebase(ownerId, ownerAuthId);
     const updatedOwners = owners.filter((_, i) => i !== index);
     setOwners(updatedOwners);
   };
 
   return (
     <>
-      <div className="w-full h-screen  p-10 flex flex-col items-center">
+      <div className="w-full h-screen p-10 flex flex-col items-center">
         <h1 className="text-5xl font-extrabold text-center mb-10 text-green-800">
           จัดการเจ้าของสัตว์เลี้ยง
         </h1>
 
-        {/* ปุ่มเพิ่มเจ้าของใหม่ */}
+        {/* Add new owner button */}
         <div className="flex justify-end mb-8 w-full max-w-3xl">
           <button
             className="bg-green-500 text-white py-2 px-6 rounded-lg shadow-md hover:bg-green-600 transition-transform transform hover:scale-105"
@@ -108,7 +158,7 @@ export default function ManageOwners() {
           </button>
         </div>
 
-        {/* ตารางแสดงเจ้าของ */}
+        {/* Owners table */}
         <div className="w-full max-w-3xl bg-white rounded-lg shadow-lg">
           <table className="min-w-full bg-white rounded-lg overflow-hidden">
             <thead className="bg-green-700 text-white">
@@ -126,10 +176,16 @@ export default function ManageOwners() {
                 >
                   <td className="py-4 px-6">{owner.name}</td>
                   <td className="py-4 px-6">{owner.contact}</td>
-                  <td className="py-4 px-6">
+                  <td className="py-4 px-6 flex gap-4">
+                    <button
+                      className="text-blue-500 hover:text-blue-600 font-medium"
+                      onClick={() => openModal(index)} // Edit owner
+                    >
+                      แก้ไข
+                    </button>
                     <button
                       className="text-red-500 hover:text-red-600 font-medium"
-                      onClick={() => handleDeleteOwner(index)}
+                      onClick={() => handleDeleteOwner(index)} // Delete owner
                     >
                       ลบ
                     </button>
@@ -141,7 +197,7 @@ export default function ManageOwners() {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal for adding or updating owner */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-60 flex items-center justify-center z-50 transition-opacity">
           <div className="bg-white w-full max-w-2xl p-10 rounded-lg shadow-2xl relative">
@@ -166,7 +222,7 @@ export default function ManageOwners() {
             </button>
 
             <h2 className="text-3xl font-bold mb-8 text-green-700 text-center">
-              เพิ่มเจ้าของสัตว์เลี้ยง
+              {editIndex !== null ? "แก้ไขเจ้าของ" : "เพิ่มเจ้าของสัตว์เลี้ยง"}
             </h2>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -224,25 +280,21 @@ export default function ManageOwners() {
 
               <div>
                 <label className="block text-gray-700 font-semibold mb-2">
-                  เลือกประเภทสัตว์
+                  เลือกสัตว์เลี้ยง
                 </label>
                 <Select
                   showSearch
-                  placeholder="กรุณาเลือกสัตว์"
+                  placeholder="กรุณาเลือกสัตว์เลี้ยง"
                   optionFilterProp="children"
                   className="w-full"
-                  // value={addPhoneMember}
-                  // onChange={(value) => setPhoneMember(value)}
-                  filterOption={(input, option) =>
-                    option?.children
-                      .toLowerCase()
-                      .indexOf(input.toLowerCase()) >= 0
-                  }
+                  value={selectedPetId} // Show selected pet ID
+                  onChange={(value) => setSelectedPetId(value)} // Store pet ID in state
                 >
-                  <Option value="สุนัข">สุนัข</Option>
-                  <Option value="แมว">แมว</Option>
-                  <Option value="นก">นก</Option>
-                  <Option value="ปลา">ปลา</Option>
+                  {pets.map((item) => (
+                    <Option key={item.id} value={item.id}>
+                      {item.name}
+                    </Option>
+                  ))}
                 </Select>
               </div>
             </div>
@@ -250,9 +302,11 @@ export default function ManageOwners() {
             <div className="mt-8 flex justify-end gap-4">
               <button
                 className="bg-green-500 text-white py-2 px-8 rounded-md hover:bg-green-600 transition-all"
-                onClick={handleAddOwner}
+                onClick={
+                  editIndex !== null ? handleUpdateOwner : handleAddOwner
+                }
               >
-                เพิ่มเจ้าของ
+                {editIndex !== null ? "แก้ไข" : "เพิ่มเจ้าของ"}
               </button>
               <button
                 className="bg-red-500 text-white py-2 px-8 rounded-md hover:bg-red-600 transition-all"

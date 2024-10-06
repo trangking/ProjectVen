@@ -1,78 +1,62 @@
-import React, { useState } from "react";
-import { Select, Input, Button } from "antd";
+import React, { useState, useEffect } from "react";
+import { Input, Button, Select, InputNumber } from "antd";
+import {
+  addPetToFirebase,
+  updatePetInFirebase,
+  fetchedPets,
+  deletePetInFirebase,
+} from "../../../../firebase/firebase"; // นำเข้า add และ update function
+import useStore from "../../../../store";
 
 const { Option } = Select;
 
-// ข้อมูลพันธุ์ของสัตว์
-const dogBreeds = ["Golden Retriever", "Labrador", "Poodle", "Bulldog"];
-const catBreeds = ["Siamese", "Persian", "Maine Coon", "Bengal"];
 const exoticBreeds = ["Snake", "Lizard", "Tortoise", "Parrot"];
 
 export default function ManageAnimals() {
-  const [pets, setPets] = useState([
-    { name: "Buddy", type: "Dog", age: 2 },
-    { name: "Whiskers", type: "Cat", age: 3 },
-  ]);
+  const newPet = useStore((state) => state.newPet);
+  const setNewPet = useStore((state) => state.setNewPet);
+  const resetNewPet = useStore((state) => state.resetNewPet);
+  const pets = useStore((state) => state.pets);
+  const setPets = useStore((state) => state.setPets);
 
-  const [newPet, setNewPet] = useState({
-    name: "",
-    type: "",
-    subType: "",
-    years: "",
-    months: "",
-  });
-  const [editIndex, setEditIndex] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
 
   const openModal = (index = null) => {
     if (index !== null) {
-      setNewPet(pets[index]);
       setEditIndex(index);
-    } else {
-      setNewPet({ name: "", type: "", subType: "", years: "", months: "" });
-      setEditIndex(null);
+      setNewPet(pets[index]); // โหลดข้อมูลสัตว์เลี้ยงที่ต้องการแก้ไข
     }
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
-    setNewPet({ name: "", type: "", subType: "", years: "", months: "" });
+    resetNewPet();
+    setEditIndex(null);
   };
 
-  const handleAddOrUpdatePet = () => {
-    if (!newPet.name || !newPet.type || (!newPet.years && !newPet.months))
-      return;
+  useEffect(() => {
+    const loadPets = async () => {
+      const fetchedPet = await fetchedPets();
+      setPets(fetchedPet);
+    };
+    loadPets();
+  }, [setPets]);
 
-    if (editIndex !== null) {
-      const updatedPets = [...pets];
-      updatedPets[editIndex] = newPet;
+  const handleDeletePet = async (petId) => {
+    try {
+      console.log("Deleting pet with id:", petId); // ตรวจสอบค่าของ petId
+      await deletePetInFirebase(petId); // ลบสัตว์เลี้ยงและ petId ที่เกี่ยวข้องใน owners
+      const updatedPets = pets.filter((pet) => pet.id !== petId); // ลบสัตว์เลี้ยงจาก state
       setPets(updatedPets);
-    } else {
-      setPets([...pets, newPet]);
+    } catch (error) {
+      console.error("Error deleting pet:", error);
     }
-    closeModal();
-  };
-
-  const handleDeletePet = (index) => {
-    const updatedPets = pets.filter((_, i) => i !== index);
-    setPets(updatedPets);
   };
 
   const breedOptions = () => {
     switch (newPet.type) {
-      case "Dog":
-        return dogBreeds.map((breed) => (
-          <Option key={breed} value={breed}>
-            {breed}
-          </Option>
-        ));
-      case "Cat":
-        return catBreeds.map((breed) => (
-          <Option key={breed} value={breed}>
-            {breed}
-          </Option>
-        ));
       case "Exotic":
         return exoticBreeds.map((breed) => (
           <Option key={breed} value={breed}>
@@ -84,14 +68,28 @@ export default function ManageAnimals() {
     }
   };
 
+  const handleAddOrUpdatePet = async () => {
+    if (editIndex !== null) {
+      const updatedPets = [...pets];
+      const petId = pets[editIndex].id; // ตรวจสอบว่ามีการเก็บ id ของสัตว์เลี้ยงหรือไม่
+      updatedPets[editIndex] = newPet;
+      setPets(updatedPets);
+      await updatePetInFirebase(petId, newPet); // ใช้ id ที่ถูกต้องในการอัปเดต
+    } else {
+      const petId = await addPetToFirebase(newPet); // เพิ่มสัตว์เลี้ยงใหม่ใน Firebase
+      if (petId) {
+        setPets([...pets, { ...newPet, id: petId }]); // เก็บ id ที่ได้จาก Firebase
+      }
+    }
+    closeModal();
+  };
+
   return (
     <>
       <div className="w-full p-10 flex flex-col items-center">
         <h1 className="text-3xl font-bold mb-8 text-green-600">
           จัดการสัตว์เลี้ยง
         </h1>
-
-        {/* ปุ่มเพิ่มสัตว์เลี้ยง */}
         <div className="flex justify-end mb-8 w-full max-w-4xl">
           <Button
             type="primary"
@@ -101,8 +99,6 @@ export default function ManageAnimals() {
             + เพิ่มสัตว์เลี้ยงใหม่
           </Button>
         </div>
-
-        {/* ตารางสัตว์เลี้ยง */}
         <div className="w-full max-w-4xl bg-white rounded-lg shadow-xl p-6">
           <table className="min-w-full bg-white rounded-lg overflow-hidden">
             <thead className="bg-green-200 text-green-700">
@@ -121,7 +117,9 @@ export default function ManageAnimals() {
                 >
                   <td className="py-4 px-6">{pet.name}</td>
                   <td className="py-4 px-6">{pet.type}</td>
-                  <td className="py-4 px-6">{pet.age} ปี</td>
+                  <td className="py-4 px-6">
+                    {pet.years} ปี {pet.months} เดือน
+                  </td>
                   <td className="py-4 px-6">
                     <button
                       className="text-green-500 hover:text-green-600 mr-4"
@@ -131,7 +129,7 @@ export default function ManageAnimals() {
                     </button>
                     <button
                       className="text-red-500 hover:text-red-600"
-                      onClick={() => handleDeletePet(index)}
+                      onClick={() => handleDeletePet(pet.id)}
                     >
                       ลบ
                     </button>
@@ -142,72 +140,107 @@ export default function ManageAnimals() {
           </table>
         </div>
       </div>
-
-      {/* Modal สำหรับเพิ่มหรือแก้ไขสัตว์เลี้ยง */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-60 flex justify-center items-center">
-          <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-lg relative">
-            <h2 className="text-center text-2xl font-bold text-green-600 mt-6 mb-6">
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-60 flex items-center justify-center z-50 transition-opacity">
+          <div className="bg-white w-full max-w-3xl p-8 rounded-lg shadow-2xl relative">
+            <h2 className="text-center text-2xl font-bold text-green-600 mb-6">
               {editIndex !== null ? "แก้ไขสัตว์เลี้ยง" : "เพิ่มสัตว์เลี้ยงใหม่"}
             </h2>
-
-            {/* ฟอร์มสำหรับกรอกข้อมูล */}
-            <div className="space-y-4">
-              <Input
-                placeholder="ชื่อสัตว์เลี้ยง"
-                value={newPet.name}
-                onChange={(e) => setNewPet({ ...newPet, name: e.target.value })}
-              />
-
-              {/* Dropdown สำหรับประเภทสัตว์ */}
-              <Select
-                placeholder="เลือกประเภทสัตว์"
-                value={newPet.type}
-                onChange={(value) => setNewPet({ ...newPet, type: value })}
-                className="w-full"
-              >
-                <Option value="Dog">หมา</Option>
-                <Option value="Cat">แมว</Option>
-                <Option value="Exotic">สัตว์เอ็กโซติก</Option>
-              </Select>
-
-              {/* Dropdown สำหรับประเภทย่อย */}
-              {newPet.type && (
-                <Select
-                  placeholder={`เลือกพันธุ์${newPet.type}`}
-                  value={newPet.subType}
-                  onChange={(value) => setNewPet({ ...newPet, subType: value })}
-                  className="w-full"
-                >
-                  {breedOptions()}
-                </Select>
-              )}
-
-              {/* อายุของสัตว์ */}
-              <div className="flex space-x-4">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="col-span-2">
                 <Input
-                  type="number"
-                  placeholder="ปี"
-                  value={newPet.years}
+                  placeholder="ชื่อสัตว์เลี้ยง"
+                  value={newPet.name}
                   onChange={(e) =>
-                    setNewPet({ ...newPet, years: e.target.value })
+                    setNewPet({ ...newPet, name: e.target.value })
                   }
-                />
-                <Input
-                  type="number"
-                  placeholder="เดือน"
-                  value={newPet.months}
-                  onChange={(e) =>
-                    setNewPet({ ...newPet, months: e.target.value })
-                  }
+                  className="py-3 px-4 border border-gray-300 rounded-lg w-full"
                 />
               </div>
+              <div className="col-span-2">
+                <Select
+                  placeholder="เลือกประเภทสัตว์"
+                  value={newPet.type}
+                  onChange={(value) => setNewPet({ ...newPet, type: value })}
+                  className="w-full "
+                >
+                  <Option value="Dog">หมา</Option>
+                  <Option value="Cat">แมว</Option>
+                  <Option value="Exotic">สัตว์เอ็กโซติก</Option>
+                </Select>
+              </div>
+              {newPet.type === "Exotic" && (
+                <div className="col-span-2">
+                  <Select
+                    placeholder={`เลือกพันธุ์${newPet.type}`}
+                    value={newPet.subType}
+                    onChange={(value) =>
+                      setNewPet({ ...newPet, subType: value })
+                    }
+                    className="w-full "
+                  >
+                    {breedOptions()}
+                  </Select>
+                </div>
+              )}
+              <div className="col-span-1">
+                <InputNumber
+                  placeholder="อายุ (ปี)"
+                  value={newPet.years}
+                  min={0}
+                  onChange={(value) => setNewPet({ ...newPet, years: value })}
+                  className="py-3 px-4 border border-gray-300 rounded-lg w-full"
+                />
+              </div>
+              <div className="col-span-1">
+                <InputNumber
+                  placeholder="อายุ (เดือน)"
+                  value={newPet.months}
+                  min={0}
+                  max={11}
+                  onChange={(value) => setNewPet({ ...newPet, months: value })}
+                  className="py-3 px-4 border border-gray-300 rounded-lg w-full"
+                />
+              </div>
+              <div>
+                <Input
+                  placeholder="สี"
+                  value={newPet.color}
+                  onChange={(e) =>
+                    setNewPet({ ...newPet, color: e.target.value })
+                  }
+                  className="py-3 px-4 border border-gray-300 rounded-lg w-full"
+                />
+              </div>
+              <div>
+                <Input
+                  placeholder="น้ำหนัก (กิโลกรัม)"
+                  value={newPet.weight}
+                  onChange={(e) =>
+                    setNewPet({ ...newPet, weight: e.target.value })
+                  }
+                  className="py-3 px-4 border border-gray-300 rounded-lg w-full"
+                />
+              </div>
+              <div className="col-span-2">
+                <Select
+                  placeholder="เพศ"
+                  value={newPet.gender}
+                  onChange={(value) => setNewPet({ ...newPet, gender: value })}
+                  className="w-full"
+                >
+                  <Option value="Male">เพศผู้</Option>
+                  <Option value="Female">เพศเมีย</Option>
+                </Select>
+              </div>
             </div>
-
-            {/* ปุ่มใน Modal */}
             <div className="flex justify-between items-center mt-8">
               <Button onClick={closeModal}>ยกเลิก</Button>
-              <Button type="primary" onClick={handleAddOrUpdatePet}>
+              <Button
+                type="primary"
+                className="bg-green-500 text-white py-3 px-6 rounded-lg shadow-md hover:bg-green-600"
+                onClick={handleAddOrUpdatePet}
+              >
                 {editIndex !== null ? "อัปเดต" : "เพิ่ม"}
               </Button>
             </div>
