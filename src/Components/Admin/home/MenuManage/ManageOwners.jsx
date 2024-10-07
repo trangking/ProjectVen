@@ -12,7 +12,7 @@ import {
 export default function ManageOwners() {
   const [editIndex, setEditIndex] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedPetId, setSelectedPetId] = useState(null); // Store selected pet ID
+  const [selectedPetIds, setSelectedPetIds] = useState([]); // Store selected pet IDs
 
   const addMember = useStore((state) => state.addMember);
   const setAddMember = useStore((state) => state.setAddMember);
@@ -56,7 +56,7 @@ export default function ManageOwners() {
       setEmailMember(selectedOwner.contact);
       setPhoneMember(selectedOwner.phone || "");
       setAddressMember(selectedOwner.address || "");
-      setSelectedPetId(selectedOwner.petId || null); // Set selected pet ID
+      setSelectedPetIds(selectedOwner.petIds || []); // Set selected pet IDs
       setEditIndex(index);
     } else {
       // Reset values for adding new owner
@@ -64,7 +64,7 @@ export default function ManageOwners() {
       setEmailMember("");
       setPhoneMember("");
       setAddressMember("");
-      setSelectedPetId(null);
+      setSelectedPetIds([]); // Reset pet selection
       setEditIndex(null);
     }
     setIsModalOpen(true);
@@ -76,12 +76,16 @@ export default function ManageOwners() {
     setEmailMember("");
     setPhoneMember("");
     setAddressMember("");
-    setSelectedPetId(null); // Reset pet selection
+    setSelectedPetIds([]); // Reset pet selection
   };
 
-  // Handle adding a new owner
   const handleAddOwner = async () => {
-    if (!addMember || !addEmailMember || !addPhoneMember || !selectedPetId)
+    if (
+      !addMember ||
+      !addEmailMember ||
+      !addPhoneMember ||
+      selectedPetIds.length === 0
+    )
       return;
 
     try {
@@ -90,11 +94,12 @@ export default function ManageOwners() {
         addEmailMember,
         addPhoneMember,
         addAddressMember,
-        selectedPetId,
+        selectedPetIds,
         owners,
         setOwners
       );
       closeModal();
+      window.location.reload();
     } catch (error) {
       console.error("Error adding owner:", error);
     }
@@ -102,26 +107,31 @@ export default function ManageOwners() {
 
   // Handle updating an existing owner
   const handleUpdateOwner = async () => {
-    if (!addMember || !addEmailMember || !addPhoneMember || !selectedPetId)
+    if (
+      !addMember ||
+      !addEmailMember ||
+      !addPhoneMember ||
+      selectedPetIds.length === 0
+    )
       return;
 
     try {
       const ownerId = owners[editIndex].id;
-      const previousPetId = owners[editIndex].petId; // เก็บค่า petId ก่อนหน้า
+      const previousPetIds = owners[editIndex].petIds || []; // Previous pet IDs
 
       const updatedOwnerData = {
         name: addMember,
         contact: addEmailMember,
         phone: addPhoneMember,
         address: addAddressMember,
-        petId: selectedPetId,
+        petIds: selectedPetIds, // Update with new selected pet IDs
       };
 
       await updateOwnerInFirebase(
         ownerId,
         updatedOwnerData,
-        previousPetId, // petId ก่อนหน้า
-        selectedPetId // petId ใหม่
+        previousPetIds, // Previous pet IDs
+        selectedPetIds // New pet IDs
       );
 
       const updatedOwners = [...owners];
@@ -277,26 +287,51 @@ export default function ManageOwners() {
                   onChange={(e) => setAddressMember(e.target.value)}
                 />
               </div>
+            </div>
+            <div className="mt-5">
+              <label className="block text-gray-700 font-semibold mb-2">
+                เลือกสัตว์เลี้ยง
+              </label>
+              <Select
+                mode="multiple" // Allow multiple pet selection
+                showSearch
+                placeholder="กรุณาเลือกสัตว์เลี้ยง"
+                optionFilterProp="children"
+                className="w-full"
+                value={selectedPetIds} // Show selected pet IDs for the current owner
+                onChange={(value) => setSelectedPetIds(value)} // Store pet IDs in state
+              >
+                {pets.map((pet) => (
+                  <Option key={pet.id} value={pet.id}>
+                    {pet.name} {/* Display pet name */}
+                  </Option>
+                ))}
+              </Select>
 
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  เลือกสัตว์เลี้ยง
-                </label>
-                <Select
-                  showSearch
-                  placeholder="กรุณาเลือกสัตว์เลี้ยง"
-                  optionFilterProp="children"
-                  className="w-full"
-                  value={selectedPetId} // Show selected pet ID
-                  onChange={(value) => setSelectedPetId(value)} // Store pet ID in state
-                >
-                  {pets.map((item) => (
-                    <Option key={item.id} value={item.id}>
-                      {item.name}
-                    </Option>
-                  ))}
-                </Select>
-              </div>
+              {editIndex !== null && owners[editIndex].petId && (
+                <div>
+                  <h3 className="text-lg font-semibold mt-4">
+                    สัตว์เลี้ยงที่เลือกไว้:
+                  </h3>
+                  <Select
+                    mode="multiple"
+                    value={selectedPetIds}
+                    onChange={(value) => setSelectedPetIds(value)}
+                    className="w-full"
+                  >
+                    {/* Map through owner's selected petIds and show their names */}
+                    {owners[editIndex].petId.map((id) => {
+                      const pet = pets.find((p) => p.id === id); // Find the pet object by id
+                      return (
+                        <Option key={id} value={id}>
+                          {pet ? pet.name : id}{" "}
+                          {/* Show pet name or fallback to id if not found */}
+                        </Option>
+                      );
+                    })}
+                  </Select>
+                </div>
+              )}
             </div>
 
             <div className="mt-8 flex justify-end gap-4">
