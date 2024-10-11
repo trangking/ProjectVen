@@ -105,7 +105,10 @@ export default function ManageAnimals() {
               <tr>
                 <th className="py-4 px-6 font-semibold text-left">ชื่อ</th>
                 <th className="py-4 px-6 font-semibold text-left">ประเภท</th>
+                <th className="py-4 px-6 font-semibold text-left">สี</th>
+                <th className="py-4 px-6 font-semibold text-left">น้ำหนัก</th>
                 <th className="py-4 px-6 font-semibold text-left">อายุ</th>
+                <th className="py-4 px-6 font-semibold text-left">เพศ</th>
                 <th className="py-4 px-6 font-semibold text-left">การจัดการ</th>
               </tr>
             </thead>
@@ -117,9 +120,12 @@ export default function ManageAnimals() {
                 >
                   <td className="py-4 px-6">{pet.name}</td>
                   <td className="py-4 px-6">{pet.type}</td>
+                  <td className="py-4 px-6">{pet.color}</td>
+                  <td className="py-4 px-6">{pet.weight}</td>
                   <td className="py-4 px-6">
                     {pet.years} ปี {pet.months} เดือน
                   </td>
+                  <td className="py-4 px-6">{pet.gender}</td>
                   <td className="py-4 px-6">
                     <button
                       className="text-green-500 hover:text-green-600 mr-4"
