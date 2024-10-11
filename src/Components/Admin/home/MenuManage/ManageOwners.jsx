@@ -80,7 +80,6 @@ function AddOwnerModal({ isOpen, onClose, pets, owners, setOwners }) {
               type="text"
               placeholder="กรอกชื่อเจ้าของ"
               className="w-full p-4 border border-gray-300 rounded-md"
-              value={addMember}
               onChange={(e) => setAddMember(e.target.value)}
             />
           </div>
@@ -93,7 +92,6 @@ function AddOwnerModal({ isOpen, onClose, pets, owners, setOwners }) {
               type="email"
               placeholder="กรอกอีเมลเจ้าของ"
               className="w-full p-4 border border-gray-300 rounded-md"
-              value={addEmailMember}
               onChange={(e) => setEmailMember(e.target.value)}
             />
           </div>
@@ -106,7 +104,6 @@ function AddOwnerModal({ isOpen, onClose, pets, owners, setOwners }) {
               type="text"
               placeholder="กรอกเบอร์โทร"
               className="w-full p-4 border border-gray-300 rounded-md"
-              value={addPhoneMember}
               onChange={(e) => setPhoneMember(e.target.value)}
             />
           </div>
@@ -119,7 +116,6 @@ function AddOwnerModal({ isOpen, onClose, pets, owners, setOwners }) {
               type="text"
               placeholder="กรอกที่อยู่"
               className="w-full p-4 border border-gray-300 rounded-md"
-              value={addAddressMember}
               onChange={(e) => setAddressMember(e.target.value)}
             />
           </div>
