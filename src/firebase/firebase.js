@@ -13,6 +13,8 @@ import {
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { v4 } from "uuid";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDt4hJzCGHCP2Hp8lQ7Xoxexv7qauYgu-A",
@@ -28,7 +30,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-
+const storage = getStorage(app);
 // Fetch owners from Firebase
 const fecthOwners = async () => {
   const colRef = collection(db, "owners");
@@ -58,7 +60,7 @@ const addPetToFirebase = async (pet) => {
       ...pet,
       createdAt: new Date(),
     });
-    return docRef.id; // คืนค่า id ของสัตว์เลี้ยงที่สร้างขึ้น
+    return docRef.id;
   } catch (error) {
     console.error("Error adding pet: ", error);
     return null;
@@ -215,6 +217,64 @@ const deletePetInFirebase = async (petId) => {
   }
 };
 
+const uploadImage = async (img) => {
+  if (!img) {
+    console.error("No image file provided");
+    return null;
+  }
+  try {
+    const storageRef = ref(storage, `doctorImages/${v4()}`); // สร้าง path โดยใช้ UUID
+    const snapshot = await uploadBytes(storageRef, img); // อัปโหลดรูปภาพ
+    const imageUrl = await getDownloadURL(snapshot.ref); // รับ URL ของรูปภาพที่อัปโหลด
+    console.log("Image URL:", imageUrl); // ตรวจสอบ URL
+    return imageUrl;
+  } catch (error) {
+    console.error("Error uploading image: ", error);
+    return null;
+  }
+};
+
+const fetchedDoctors = async () => {
+  const colRef = collection(db, "doctorsVen");
+  const snapshot = await getDocs(colRef);
+  const data = snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+  return data;
+};
+
+const addNewDoctors = async (newDoctor, img) => {
+  if (!img) {
+    console.error("No image file provided");
+    return null;
+  }
+
+  // อัปโหลดรูปภาพและรับ URL
+  const uploadedImageUrl = await uploadImage(img);
+
+  const NewDoctors = {
+    DoctorName: newDoctor.name,
+    Specialty: newDoctor.specialty,
+    EmailDoctor: newDoctor.email,
+    PhoneDoctor: newDoctor.phone,
+    Medical_license: uploadedImageUrl, // บันทึก URL ของรูปภาพ
+  };
+
+  try {
+    console.log("New doctor data with image URL: ", NewDoctors); // ตรวจสอบข้อมูล
+    const DoctorsRef = collection(db, "doctorsVen");
+    const docRef = await addDoc(DoctorsRef, {
+      ...NewDoctors,
+      createdAt: new Date(),
+    });
+    return docRef;
+  } catch (error) {
+    console.error("Error adding doctor: ", error);
+    return null;
+  }
+};
+
 export {
   AddOwnerToFirebase,
   addPetToFirebase,
@@ -224,6 +284,9 @@ export {
   deletePetInFirebase,
   fecthOwners,
   fetchedPets,
+  fetchedDoctors,
+  addNewDoctors,
   auth,
   db,
+  storage,
 };
