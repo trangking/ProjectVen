@@ -21,6 +21,8 @@ import ManageOwners from "./Components/Admin/home/MenuManage/ManageOwners";
 import ManageDoctorsVets from "./Components/Admin/home/MenuManage/ManageDoctorsVets";
 import DrugManage from "./Components/Admin/home/drugMange";
 import Appointment from "./Components/Admin/home/Appointment";
+import Doctorpage from "./Components/Doctor/Doctorpage";
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
@@ -43,6 +45,7 @@ root.render(
           <Route path="DrugManage" element={<DrugManage />} />
           <Route path="/pageAdmin/Appointment" element={<Appointment />} />
         </Route>
+        <Route path="/Doctorpage" element={<Doctorpage />} />
       </Routes>
     </Router>
   </React.StrictMode>
