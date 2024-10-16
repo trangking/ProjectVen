@@ -13,7 +13,7 @@ import {
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { v4 } from "uuid";
 
 const firebaseConfig = {
@@ -217,17 +217,27 @@ const deletePetInFirebase = async (petId) => {
   }
 };
 
-const uploadImage = async (img) => {
+const uploadImage = async (img, type) => {
   if (!img) {
     console.error("No image file provided");
     return null;
   }
   try {
-    const storageRef = ref(storage, `doctorImages/${v4()}`); // สร้าง path โดยใช้ UUID
-    const snapshot = await uploadBytes(storageRef, img); // อัปโหลดรูปภาพ
-    const imageUrl = await getDownloadURL(snapshot.ref); // รับ URL ของรูปภาพที่อัปโหลด
-    console.log("Image URL:", imageUrl); // ตรวจสอบ URL
-    return imageUrl;
+    if (type === "doctor") {
+      const storageRef = ref(storage, `doctorImages/${v4()}`); // สร้าง path โดยใช้ UUID
+      const snapshot = await uploadBytes(storageRef, img); // อัปโหลดรูปภาพ
+      const imageUrl = await getDownloadURL(snapshot.ref); // รับ URL ของรูปภาพที่อัปโหลด
+      console.log("Image URL:", imageUrl); // ตรวจสอบ URL
+      return imageUrl;
+    }
+    if (type === "vaccine") {
+      const storageRef = ref(storage, `vaccineImages/${v4()}`); // สร้าง path โดยใช้ UUID
+      const snapshot = await uploadBytes(storageRef, img); // อัปโหลดรูปภาพ
+      const imageUrl = await getDownloadURL(snapshot.ref); // รับ URL ของรูปภาพที่อัปโหลด
+      console.log("Image URL:", imageUrl); // ตรวจสอบ URL
+      return imageUrl;
+    }
+
   } catch (error) {
     console.error("Error uploading image: ", error);
     return null;
@@ -249,9 +259,9 @@ const addNewDoctors = async (newDoctor, img) => {
     console.error("No image file provided");
     return null;
   }
-
+  const type = "doctor"
   // อัปโหลดรูปภาพและรับ URL
-  const uploadedImageUrl = await uploadImage(img);
+  const uploadedImageUrl = await uploadImage(img, type);
 
   const NewDoctors = {
     DoctorName: newDoctor.name,
@@ -275,16 +285,139 @@ const addNewDoctors = async (newDoctor, img) => {
   }
 };
 
+const fetchedVaccine = async () => {
+  const colRef = collection(db, "vaccine");
+  const snapshot = await getDocs(colRef);
+  const data = snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+  return data;
+}
+
+const AddVaccine = async (newVaccine, img) => {
+  if (!newVaccine || !newVaccine.name) { // ตรวจสอบให้แน่ใจว่ามี name และ img ถูกต้อง
+    console.error("ไม่มีข้อมูลชื่อวัคซีน");
+    return console.log("กรุณากรอกชื่อวัคซีน");
+  }
+  const type = "vaccine"
+
+  if (!newVaccine.image) {
+    console.error("ไม่มีรูปภาพ");
+    return console.log("กรุณาอัพโหลดรูปภาพ");
+  }
+
+  // อัปโหลดรูปภาพและรับ URL
+  const uploadedImageUrl = await uploadImage(newVaccine.image, type);
+
+  const NewVaccine = {
+    vaccineName: newVaccine.name, // ใช้ newVaccine.name แทน namevaccine
+    vaccineImage: uploadedImageUrl, // URL รูปภาพที่อัปโหลด
+  };
+
+  try {
+    const vaccineRef = collection(db, "vaccine");
+    const docRef = await addDoc(vaccineRef, {
+      ...NewVaccine,
+      createdAt: new Date(),
+    });
+    console.log("Vaccine added with ID: ", docRef.id);
+    return docRef;
+  } catch (error) {
+    console.error("Error adding vaccine: ", error);
+    return null;
+  }
+};
+
+const EditVaccine = async (vaccineId, updatedVaccine, img) => {
+  try {
+    // ตรวจสอบว่า updatedVaccine.vaccineName มีค่าหรือไม่ ถ้าไม่มีให้ใช้ชื่อเดิม
+    const vaccineName = updatedVaccine.vaccineName || "ชื่อวัคซีนไม่ระบุ";
+
+    // ใช้ URL ของรูปเดิมก่อน ถ้าไม่มีการเปลี่ยนรูปภาพ
+    let uploadedImageUrl = updatedVaccine.vaccineImage;
+
+    // อัปโหลดรูปภาพใหม่ถ้ามีการเปลี่ยนแปลง
+    if (img) {
+      const type = "vaccine";
+      uploadedImageUrl = await uploadImage(img, type); // อัปโหลดรูปใหม่
+
+      // ลบรูปภาพเก่าออกจาก Firebase Storage ถ้ารูปใหม่แตกต่างจากรูปเดิม
+      if (updatedVaccine.vaccineImage) {
+        const filePath = updatedVaccine.vaccineImage
+          .split("/vaccineImages%2F")[1]
+          ?.split("?")[0]; // แยก path รูปภาพที่ถูกต้องจาก URL
+
+        if (filePath) {
+          const storageRef = ref(storage, `vaccineImages/${decodeURIComponent(filePath)}`);
+          await deleteObject(storageRef); // ลบรูปเก่าออก
+        }
+      }
+    }
+
+    const updatedData = {
+      vaccineName,
+      vaccineImage: uploadedImageUrl, // ใช้ URL รูปใหม่หรือรูปเดิม
+    };
+
+    // อัปเดตเอกสารใน Firestore
+    const vaccineDocRef = doc(db, "vaccine", vaccineId);
+    await updateDoc(vaccineDocRef, updatedData);
+
+    console.log("Vaccine updated successfully.");
+  } catch (error) {
+    console.error("Error updating vaccine: ", error);
+  }
+};
+
+
+const deleteVaccineInFirebase = async (vaccineId, imageUrl) => {
+  try {
+    // ลบเอกสารวัคซีนจาก Firestore
+    const vaccineDocRef = doc(db, "vaccine", vaccineId);
+    await deleteDoc(vaccineDocRef);
+
+    // ตรวจสอบว่ามี imageUrl และไม่เป็น undefined
+    if (imageUrl && typeof imageUrl === "string") {
+      // แยกเอา path ของไฟล์ออกจาก URL โดยปกติ path คือหลัง `vaccineImages/`
+      const filePath = imageUrl.split("/vaccineImages%2F")[1]?.split("?")[0]; // ตรวจสอบและแยกเอา path ที่ถูกต้อง
+      if (filePath) {
+        const storageRef = ref(storage, `vaccineImages/${decodeURIComponent(filePath)}`); // ใช้ path ที่ถูกต้อง
+        await deleteObject(storageRef); // ลบไฟล์จาก Storage
+        console.log("Image deleted successfully from storage.");
+      } else {
+        console.warn("Image path is invalid or cannot be parsed.");
+      }
+    } else {
+      console.warn("No valid image URL provided.");
+    }
+
+    console.log("Vaccine and associated image deleted successfully.");
+  } catch (error) {
+    console.error("Error deleting vaccine or image: ", error);
+  }
+};
+
+const addNEwTreatment = () => {
+
+}
+
+
+
 export {
   AddOwnerToFirebase,
   addPetToFirebase,
+  AddVaccine,
   updatePetInFirebase,
   updateOwnerInFirebase,
+  EditVaccine,
   deleteOwnerInFirebase,
   deletePetInFirebase,
+  deleteVaccineInFirebase,
   fecthOwners,
   fetchedPets,
   fetchedDoctors,
+  fetchedVaccine,
   addNewDoctors,
   auth,
   db,

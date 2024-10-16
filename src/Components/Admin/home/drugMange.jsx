@@ -1,198 +1,243 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Table, Button, Modal, Input, Upload, Card, Space, Spin } from "antd";
+import { UploadOutlined, CheckCircleOutlined } from "@ant-design/icons";
+import {
+  AddVaccine,
+  fetchedVaccine,
+  deleteVaccineInFirebase,
+  EditVaccine,
+} from "../../../firebase/firebase";
 
 export default function DrugManage() {
-  const [vaccineData, setVaccineData] = useState([
-    { id: 1, name: "วัคซีน A", image: null },
-    { id: 2, name: "วัคซีน B", image: null },
-  ]);
-
+  const [vaccineData, setVaccineData] = useState([]);
   const [newVaccine, setNewVaccine] = useState({ name: "", image: null });
   const [editVaccine, setEditVaccine] = useState(null);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [editImage, setEditImage] = useState(null); // State สำหรับการอัปโหลดรูปใหม่ใน Modal แก้ไข
+  const [uploading, setUploading] = useState(false); // สถานะการอัปโหลด
+  const [uploadComplete, setUploadComplete] = useState(false); // สถานะอัปโหลดเสร็จ
 
-  const handleFileChange = (e, isEdit = false) => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (isEdit) {
-        setEditVaccine({ ...editVaccine, image: reader.result });
-      } else {
-        setNewVaccine({ ...newVaccine, image: reader.result });
-      }
-    };
-    if (file) reader.readAsDataURL(file);
+  // ฟังก์ชันสำหรับลบวัคซีน
+  const handleDeleteVaccine = async (vaccine) => {
+    await deleteVaccineInFirebase(vaccine.id, vaccine.vaccineImage);
+    setVaccineData(vaccineData.filter((v) => v.id !== vaccine.id));
   };
 
-  const handleAddVaccine = () => {
-    if (newVaccine.name && newVaccine.image) {
-      setVaccineData([...vaccineData, { ...newVaccine, id: Date.now() }]);
-      setNewVaccine({ name: "", image: null });
-      setShowAddModal(false); // ปิด modal หลังเพิ่ม
+  // ฟังก์ชันสำหรับเพิ่มวัคซีน
+  const handleAddVaccine = async () => {
+    if (!newVaccine.name || !newVaccine.image) {
+      console.log("กรุณากรอกข้อมูลให้ครบถ้วน");
+      return;
     }
+    await AddVaccine(newVaccine);
+    setNewVaccine({ name: "", image: null });
+    setIsAddModalVisible(false);
+    const updatedVaccines = await fetchedVaccine();
+    setVaccineData(updatedVaccines); // อัปเดตตารางหลังจากเพิ่มวัคซีน
   };
 
-  const handleEditVaccine = (vaccine) => {
-    setEditVaccine(vaccine);
-    setShowEditModal(true);
+  // ฟังก์ชันสำหรับบันทึกการแก้ไขวัคซีน
+  const handleSaveEdit = async () => {
+    if (!editVaccine.vaccineName) {
+      console.log("กรุณากรอกชื่อวัคซีน");
+      return;
+    }
+
+    await EditVaccine(editVaccine.id, editVaccine, editImage);
+    setIsEditModalVisible(false);
+    const updatedVaccines = await fetchedVaccine();
+    setVaccineData(updatedVaccines); // อัปเดตตารางหลังจากแก้ไขวัคซีน
   };
 
-  const handleSaveEdit = () => {
-    setVaccineData(
-      vaccineData.map((vaccine) =>
-        vaccine.id === editVaccine.id ? editVaccine : vaccine
-      )
-    );
-    setEditVaccine(null);
-    setShowEditModal(false); // ปิด modal หลังบันทึกการแก้ไข
-  };
+  const columns = [
+    {
+      title: "ชื่อวัคซีน",
+      dataIndex: "vaccineName",
+      key: "name",
+      render: (text) => <strong>{text}</strong>,
+    },
+    {
+      title: "รูปภาพ",
+      dataIndex: "vaccineImage",
+      key: "image",
+      render: (image) =>
+        image ? (
+          <img
+            src={image} // ใช้ URL ของรูปภาพจาก Firebase Storage
+            alt="vaccine"
+            style={{
+              width: "100px",
+              height: "70px",
+              objectFit: "cover",
+              borderRadius: "4px",
+              border: "1px solid #d9d9d9",
+            }}
+          />
+        ) : (
+          <span>ไม่มีรูป</span>
+        ),
+    },
+    {
+      title: "การจัดการ",
+      key: "action",
+      render: (text, record) => (
+        <Space size="middle">
+          <Button
+            type="primary"
+            style={{ backgroundColor: "#1890ff", borderColor: "#1890ff" }}
+            onClick={() => {
+              setEditVaccine(record);
+              setIsEditModalVisible(true);
+            }}
+          >
+            แก้ไข
+          </Button>
+          <Button
+            type="danger"
+            style={{ backgroundColor: "#f5222d", borderColor: "#f5222d" }}
+            onClick={() => handleDeleteVaccine(record)}
+          >
+            ลบ
+          </Button>
+        </Space>
+      ),
+    },
+  ];
 
-  const handleDeleteVaccine = (id) => {
-    setVaccineData(vaccineData.filter((vaccine) => vaccine.id !== id));
-  };
+  useEffect(() => {
+    const loadVaccines = async () => {
+      const fetchedVaccines = await fetchedVaccine();
+      setVaccineData(fetchedVaccines);
+    };
+    loadVaccines();
+  }, [setVaccineData]);
 
   return (
-    <div className="container mx-auto p-6 bg-white shadow-lg rounded-lg">
-      <div className="flex flex-row justify-between">
-        <h1 className="text-2xl font-bold mb-6 text-gray-800">จัดการวัคซีน</h1>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="bg-green-500 text-white px-4 h- rounded hover:bg-green-400 transition"
-        >
-          เพิ่มวัคซีน
-        </button>
-      </div>
+    <div className="container mx-auto p-6">
+      <Card
+        bordered={false}
+        style={{ marginBottom: "24px", backgroundColor: "#fafafa" }}
+      >
+        <h1 className="text-2xl font-bold mb-6">จัดการวัคซีน</h1>
+        <div style={{ textAlign: "right" }}>
+          <Button
+            type="primary"
+            onClick={() => setIsAddModalVisible(true)}
+            style={{
+              marginBottom: 16,
+              backgroundColor: "#52c41a",
+              borderColor: "#52c41a",
+            }}
+          >
+            เพิ่มวัคซีน
+          </Button>
+        </div>
 
-      {/* ตารางแสดงข้อมูลวัคซีน */}
-      <table className="table-auto w-full mb-6 text-left border-collapse">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="px-4 py-3 font-medium text-gray-700">ชื่อวัคซีน</th>
-            <th className="px-4 py-3 font-medium text-gray-700">รูปภาพ</th>
-            <th className="px-4 py-3 font-medium text-gray-700">การจัดการ</th>
-          </tr>
-        </thead>
-        <tbody>
-          {vaccineData.map((vaccine) => (
-            <tr key={vaccine.id} className="border-t">
-              <td className="px-4 py-3">{vaccine.name}</td>
-              <td className="px-4 py-3">
-                {vaccine.image ? (
-                  <img
-                    src={vaccine.image}
-                    alt={vaccine.name}
-                    className="w-12 h-12 object-cover rounded"
-                  />
-                ) : (
-                  <span className="text-gray-500">ไม่มีรูป</span>
-                )}
-              </td>
-              <td className="px-4 py-3">
-                <button
-                  onClick={() => handleEditVaccine(vaccine)}
-                  className="bg-yellow-400 text-white px-3 py-1 rounded hover:bg-yellow-300 transition mr-2"
-                >
-                  แก้ไข
-                </button>
-                <button
-                  onClick={() => handleDeleteVaccine(vaccine.id)}
-                  className="bg-red-400 text-white px-3 py-1 rounded hover:bg-red-300 transition"
-                >
-                  ลบ
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* ปุ่มเปิด Modal สำหรับเพิ่มวัคซีน */}
+        <Table
+          columns={columns}
+          dataSource={vaccineData}
+          rowKey="id"
+          pagination={{ pageSize: 5 }}
+        />
+      </Card>
 
       {/* Modal สำหรับเพิ่มวัคซีน */}
-      {showAddModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-8 rounded shadow-lg w-96">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">
-              เพิ่มวัคซีน
-            </h2>
-            <input
-              type="text"
-              placeholder="ชื่อวัคซีน"
-              value={newVaccine.name}
-              onChange={(e) =>
-                setNewVaccine({ ...newVaccine, name: e.target.value })
-              }
-              className="border px-4 py-2 mb-3 w-full rounded focus:ring-2 focus:ring-green-400"
-            />
-            <input
-              type="file"
-              onChange={handleFileChange}
-              className="block mb-3 text-gray-700"
-            />
-            {newVaccine.image && (
-              <img
-                src={newVaccine.image}
-                alt="New vaccine"
-                className="w-12 h-12 object-cover rounded mb-3"
-              />
-            )}
-            <button
-              onClick={handleAddVaccine}
-              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-400 transition w-full"
-            >
-              เพิ่มวัคซีน
-            </button>
-            <button
-              onClick={() => setShowAddModal(false)}
-              className="mt-4 text-red-500 w-full"
-            >
-              ยกเลิก
-            </button>
-          </div>
-        </div>
-      )}
+      <Modal
+        title="เพิ่มวัคซีน"
+        visible={isAddModalVisible}
+        onOk={handleAddVaccine}
+        onCancel={() => setIsAddModalVisible(false)}
+        okText="เพิ่ม"
+        cancelText="ยกเลิก"
+      >
+        <Input
+          placeholder="ชื่อวัคซีน"
+          value={newVaccine.name}
+          onChange={(e) =>
+            setNewVaccine({ ...newVaccine, name: e.target.value })
+          }
+          style={{ marginBottom: 16 }}
+        />
+        <Upload
+          beforeUpload={(file) => {
+            const isJpgOrPng =
+              file.type === "image/jpeg" || file.type === "image/png";
+            if (!isJpgOrPng) {
+              alert("You can only upload JPG/PNG file!");
+              return Upload.LIST_IGNORE;
+            }
+
+            setUploading(true); // เริ่มแสดง loading
+            // Simulate upload delay with setTimeout, replace with real upload logic
+            setTimeout(() => {
+              setNewVaccine({ ...newVaccine, image: file });
+              setUploading(false); // หยุด loading
+              setUploadComplete(true); // อัปโหลดเสร็จ
+            }, 2000); // delay 2 วินาที
+
+            return false;
+          }}
+          showUploadList={false}
+        >
+          <Button icon={<UploadOutlined />}>อัพโหลดรูปภาพ (JPG/PNG)</Button>
+        </Upload>
+        {/* แสดง loading หรือติ๊กถูกตามสถานะ */}
+        {uploading && <Spin style={{ marginTop: 16 }} />} {/* Loading */}
+        {uploadComplete && !uploading && (
+          <CheckCircleOutlined
+            style={{ color: "green", fontSize: 24, marginTop: 16 }}
+          />
+        )}{" "}
+        {/* ติ๊กถูก */}
+      </Modal>
 
       {/* Modal สำหรับแก้ไขวัคซีน */}
-      {showEditModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-8 rounded shadow-lg w-96">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">
-              แก้ไขวัคซีน
-            </h2>
-            <input
-              type="text"
-              value={editVaccine.name}
-              onChange={(e) =>
-                setEditVaccine({ ...editVaccine, name: e.target.value })
+      {editVaccine && (
+        <Modal
+          title="แก้ไขวัคซีน"
+          visible={isEditModalVisible}
+          onOk={handleSaveEdit}
+          onCancel={() => setIsEditModalVisible(false)}
+          okText="บันทึก"
+          cancelText="ยกเลิก"
+        >
+          <Input
+            placeholder="ชื่อวัคซีน"
+            value={editVaccine.vaccineName}
+            onChange={(e) =>
+              setEditVaccine({ ...editVaccine, vaccineName: e.target.value })
+            }
+            style={{ marginBottom: 16 }}
+          />
+          <Upload
+            beforeUpload={(file) => {
+              const isJpgOrPng =
+                file.type === "image/jpeg" || file.type === "image/png";
+              if (!isJpgOrPng) {
+                alert("You can only upload JPG/PNG file!");
+                return Upload.LIST_IGNORE;
               }
-              className="border px-4 py-2 mb-3 w-full rounded focus:ring-2 focus:ring-blue-400"
+              setEditImage(file); // เก็บไฟล์รูปใหม่ใน state
+              return false;
+            }}
+            showUploadList={false}
+          >
+            <Button icon={<UploadOutlined />}>อัพโหลดรูปภาพ (JPG/PNG)</Button>
+          </Upload>
+          {editVaccine.vaccineImage && (
+            <img
+              src={editVaccine.vaccineImage}
+              alt="vaccine"
+              style={{
+                width: "100px",
+                height: "70px",
+                objectFit: "cover",
+                marginTop: 16,
+              }}
             />
-            <input
-              type="file"
-              onChange={(e) => handleFileChange(e, true)}
-              className="block mb-3 text-gray-700"
-            />
-            {editVaccine.image && (
-              <img
-                src={editVaccine.image}
-                alt="Edit vaccine"
-                className="w-12 h-12 object-cover rounded mb-3"
-              />
-            )}
-            <button
-              onClick={handleSaveEdit}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-400 transition w-full"
-            >
-              บันทึก
-            </button>
-            <button
-              onClick={() => setShowEditModal(false)}
-              className="mt-4 text-red-500 w-full"
-            >
-              ยกเลิก
-            </button>
-          </div>
-        </div>
+          )}
+        </Modal>
       )}
     </div>
   );
