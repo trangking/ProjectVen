@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import {
   getFirestore,
   getDocs,
+  getDoc,
   collection,
   addDoc,
   updateDoc,
@@ -10,10 +11,17 @@ import {
   setDoc,
   query,
   where,
+  arrayUnion,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 import { v4 } from "uuid";
 
 const firebaseConfig = {
@@ -53,6 +61,22 @@ const fetchedPets = async () => {
   return data;
 };
 
+const getPetbyId = async (petId) => {
+  try {
+    const petDocRef = doc(db, "pets", petId); // สร้าง DocumentReference สำหรับสัตว์เลี้ยง
+    const petDoc = await getDoc(petDocRef); // รอผลลัพธ์จากการดึงข้อมูลสัตว์เลี้ยง
+
+    if (petDoc.exists()) {
+      return petDoc.data(); // คืนค่าข้อมูลสัตว์เลี้ยง
+    } else {
+      console.error("No such pet document!"); // ถ้าเอกสารไม่พบ
+      return null; // คืนค่า null ถ้าไม่มีเอกสาร
+    }
+  } catch (error) {
+    console.error("Error fetching pet: ", error); // แสดงข้อผิดพลาด
+    return null; // คืนค่า null ในกรณีที่เกิดข้อผิดพลาด
+  }
+};
 // Add pet to Firebase
 const addPetToFirebase = async (pet) => {
   try {
@@ -237,7 +261,6 @@ const uploadImage = async (img, type) => {
       console.log("Image URL:", imageUrl); // ตรวจสอบ URL
       return imageUrl;
     }
-
   } catch (error) {
     console.error("Error uploading image: ", error);
     return null;
@@ -259,7 +282,7 @@ const addNewDoctors = async (newDoctor, img) => {
     console.error("No image file provided");
     return null;
   }
-  const type = "doctor"
+  const type = "doctor";
   // อัปโหลดรูปภาพและรับ URL
   const uploadedImageUrl = await uploadImage(img, type);
 
@@ -293,14 +316,15 @@ const fetchedVaccine = async () => {
     ...doc.data(),
   }));
   return data;
-}
+};
 
 const AddVaccine = async (newVaccine, img) => {
-  if (!newVaccine || !newVaccine.name) { // ตรวจสอบให้แน่ใจว่ามี name และ img ถูกต้อง
+  if (!newVaccine || !newVaccine.name) {
+    // ตรวจสอบให้แน่ใจว่ามี name และ img ถูกต้อง
     console.error("ไม่มีข้อมูลชื่อวัคซีน");
     return console.log("กรุณากรอกชื่อวัคซีน");
   }
-  const type = "vaccine"
+  const type = "vaccine";
 
   if (!newVaccine.image) {
     console.error("ไม่มีรูปภาพ");
@@ -349,7 +373,10 @@ const EditVaccine = async (vaccineId, updatedVaccine, img) => {
           ?.split("?")[0]; // แยก path รูปภาพที่ถูกต้องจาก URL
 
         if (filePath) {
-          const storageRef = ref(storage, `vaccineImages/${decodeURIComponent(filePath)}`);
+          const storageRef = ref(
+            storage,
+            `vaccineImages/${decodeURIComponent(filePath)}`
+          );
           await deleteObject(storageRef); // ลบรูปเก่าออก
         }
       }
@@ -370,7 +397,6 @@ const EditVaccine = async (vaccineId, updatedVaccine, img) => {
   }
 };
 
-
 const deleteVaccineInFirebase = async (vaccineId, imageUrl) => {
   try {
     // ลบเอกสารวัคซีนจาก Firestore
@@ -382,7 +408,10 @@ const deleteVaccineInFirebase = async (vaccineId, imageUrl) => {
       // แยกเอา path ของไฟล์ออกจาก URL โดยปกติ path คือหลัง `vaccineImages/`
       const filePath = imageUrl.split("/vaccineImages%2F")[1]?.split("?")[0]; // ตรวจสอบและแยกเอา path ที่ถูกต้อง
       if (filePath) {
-        const storageRef = ref(storage, `vaccineImages/${decodeURIComponent(filePath)}`); // ใช้ path ที่ถูกต้อง
+        const storageRef = ref(
+          storage,
+          `vaccineImages/${decodeURIComponent(filePath)}`
+        ); // ใช้ path ที่ถูกต้อง
         await deleteObject(storageRef); // ลบไฟล์จาก Storage
         console.log("Image deleted successfully from storage.");
       } else {
@@ -398,15 +427,80 @@ const deleteVaccineInFirebase = async (vaccineId, imageUrl) => {
   }
 };
 
-const addNEwTreatment = () => {
+const addNEwTreatment = async (petId, vaccineId, treatmentsdec, nextAppointmentDate) => {
+  try {
+    const petDocRef = doc(db, "pets", petId); // เอกสารสัตว์เลี้ยง
+    const vaccineDocRef = doc(db, "vaccine", vaccineId); // เอกสารวัคซีน
 
-}
+    // ดึงข้อมูลวัคซีน
+    const vaccineDoc = await getDoc(vaccineDocRef);
 
+    if (vaccineDoc.exists()) {
+      console.log("Vaccine Document:", vaccineDoc.data()); // แสดงข้อมูลวัคซีน
+
+      // สร้างข้อมูลการรักษาใหม่
+      const newTreatment = {
+        vaccine: vaccineDoc.data(), // ใช้ข้อมูลวัคซีนที่ดึงมา
+        description: treatmentsdec,
+        nextAppointmentDate: nextAppointmentDate ? nextAppointmentDate : "ไม่มีการนัด",
+        DateVaccination: new Date(), // สร้างวันที่
+      };
+
+      // อัปเดตเอกสารสัตว์เลี้ยง
+      const updatedPetData = {
+        historytreatments: arrayUnion(newTreatment),
+      };
+
+
+      await updateDoc(petDocRef, updatedPetData); // อัปเดตเอกสาร
+      const doctorID = "HzQiVbpyy3ImR0JwuJOY"; // Correct doctor ID
+      await addAppointmentInDoctor(petId, doctorID); // Pass petId (string) instead of petDocRef
+      console.log("Pet document updated successfully");
+    } else {
+      console.error("No such vaccine document!"); // ถ้าเอกสารวัคซีนไม่พบ
+    }
+  } catch (error) {
+    console.error("Error updating pet: ", error); // แสดงข้อผิดพลาด
+  }
+};
+
+const addAppointmentInDoctor = async (petId, doctorID) => {
+  console.log("petID", petId);
+  console.log("doctorID", doctorID);
+
+
+  try {
+    const petDocRef = doc(db, "pets", petId); // เอกสารสัตว์เลี้ยง
+    const doctorDocRef = doc(db, "doctorsVen", doctorID); // Corrected collection for doctors
+
+    const GetDocpet = await getDoc(petDocRef); // Await to get the document
+    const GetDoctor = await getDoc(doctorDocRef); // Await to get the doctor document
+
+    console.log(GetDocpet.data().historytreatments.nextAppointmentDate)
+    console.log(GetDoctor.data());
+
+    const AddAppointMent = {
+      pet: GetDocpet.data(),
+      Doctor: GetDoctor.data(),
+      // DateVaccination: GetDocpet.data().nextAppointmentDate,
+      status: false
+    };
+
+    // Use addDoc for adding a document
+    await addDoc(collection(db, "appointment"), AddAppointMent);
+    console.log("Appointment added successfully");
+
+
+  } catch (error) {
+    console.error("Error updating pet: ", error); // แสดงข้อผิดพลาด
+  }
+};
 
 
 export {
   AddOwnerToFirebase,
   addPetToFirebase,
+  getPetbyId,
   AddVaccine,
   updatePetInFirebase,
   updateOwnerInFirebase,
@@ -419,6 +513,7 @@ export {
   fetchedDoctors,
   fetchedVaccine,
   addNewDoctors,
+  addNEwTreatment,
   auth,
   db,
   storage,
