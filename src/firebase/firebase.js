@@ -12,6 +12,7 @@ import {
   query,
   where,
   arrayUnion,
+  arrayRemove
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
@@ -39,7 +40,8 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
-// Fetch owners from Firebase
+
+// Fetch pets from Firebase
 const fecthOwners = async () => {
   const colRef = collection(db, "owners");
   const snapshot = await getDocs(colRef);
@@ -61,22 +63,6 @@ const fetchedPets = async () => {
   return data;
 };
 
-const getPetbyId = async (petId) => {
-  try {
-    const petDocRef = doc(db, "pets", petId); // สร้าง DocumentReference สำหรับสัตว์เลี้ยง
-    const petDoc = await getDoc(petDocRef); // รอผลลัพธ์จากการดึงข้อมูลสัตว์เลี้ยง
-
-    if (petDoc.exists()) {
-      return petDoc.data(); // คืนค่าข้อมูลสัตว์เลี้ยง
-    } else {
-      console.error("No such pet document!"); // ถ้าเอกสารไม่พบ
-      return null; // คืนค่า null ถ้าไม่มีเอกสาร
-    }
-  } catch (error) {
-    console.error("Error fetching pet: ", error); // แสดงข้อผิดพลาด
-    return null; // คืนค่า null ในกรณีที่เกิดข้อผิดพลาด
-  }
-};
 // Add pet to Firebase
 const addPetToFirebase = async (pet) => {
   try {
@@ -84,7 +70,7 @@ const addPetToFirebase = async (pet) => {
       ...pet,
       createdAt: new Date(),
     });
-    return docRef.id;
+    return docRef.id; // คืนค่า id ของสัตว์เลี้ยงที่สร้างขึ้น
   } catch (error) {
     console.error("Error adding pet: ", error);
     return null;
@@ -107,11 +93,11 @@ const AddOwnerToFirebase = async (
   addEmailMember,
   addPhoneMember,
   addAddressMember,
-  selectedPetId,
+  selectedPetIds, // Multiple pet selection
   owners,
   setOwners
 ) => {
-  if (!addMember || !addEmailMember || !addPhoneMember || !selectedPetId)
+  if (!addMember || !addEmailMember || !addPhoneMember || selectedPetIds.length === 0)
     return;
 
   const newOwnerData = {
@@ -119,54 +105,59 @@ const AddOwnerToFirebase = async (
     contact: addEmailMember,
     phone: addPhoneMember,
     address: addAddressMember,
-    petId: selectedPetId,
+    petIds: selectedPetIds, // Store multiple pet IDs
   };
-
   try {
-    // Create a new user in Firebase Authentication
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       addEmailMember,
       addPhoneMember
     );
     const userId = userCredential.user.uid;
-
     await setDoc(doc(db, "owners", userId), newOwnerData);
-
-    const petDocRef = doc(db, "pets", selectedPetId);
-    await updateDoc(petDocRef, {
-      ownerId: userId,
+    const updatePetPromises = selectedPetIds.map(async (petId) => {
+      const petDocRef = doc(db, "pets", petId);
+      await updateDoc(petDocRef, {
+        ownerId: userId,
+      });
     });
-
+    await Promise.all(updatePetPromises);
     setOwners([...owners, { ...newOwnerData, id: userId }]);
-    console.log("Owner added and pet updated successfully.");
+    console.log("Owner added and pets updated successfully.");
   } catch (error) {
-    console.error("Error adding owner:", error);
+    console.error("Error adding owner and updating pets:", error);
   }
 };
 
 // Update existing owner and change linked pet
-const updateOwnerInFirebase = async (
-  ownerId,
-  updatedOwnerData,
-  previousPetId,
-  newPetId
-) => {
+const updateOwnerInFirebase = async (ownerId, updatedOwnerData, previousPetIds, newPetIds) => {
   try {
-    // อัปเดตข้อมูลเจ้าของในคอลเลกชัน "owners"
+    // ตรวจสอบว่า ownerId เป็น string และมีค่า
+    if (!ownerId || typeof ownerId !== 'string') {
+      throw new Error('Invalid ownerId');
+    }
+
+    // อัปเดตข้อมูลเจ้าของใน Firestore
     const ownerDocRef = doc(db, "owners", ownerId);
     await updateDoc(ownerDocRef, updatedOwnerData);
 
-    // ถ้า petId มีการเปลี่ยนแปลง ให้ลบ ownerId ออกจากสัตว์เลี้ยงเก่า
-    if (previousPetId && previousPetId !== newPetId) {
-      const oldPetDocRef = doc(db, "pets", previousPetId);
-      await updateDoc(oldPetDocRef, { ownerId: null }); // ลบ ownerId จากสัตว์เลี้ยงเก่า
+    // ตรวจสอบการเปลี่ยนแปลงของ petIds และทำการอัปเดตใน Firestore
+    const petsRef = collection(db, "pets");
+
+    // ลบ ownerId ออกจากสัตว์เลี้ยงเก่าที่ไม่ได้อยู่ใน newPetIds อีกต่อไป
+    for (const petId of previousPetIds) {
+      if (!newPetIds.includes(petId)) {
+        const petDocRef = doc(petsRef, petId);
+        await updateDoc(petDocRef, { ownerId: null });
+      }
     }
 
-    // เพิ่ม ownerId ลงในสัตว์เลี้ยงใหม่ (ถ้าเลือกสัตว์เลี้ยงใหม่)
-    if (newPetId) {
-      const newPetDocRef = doc(db, "pets", newPetId);
-      await updateDoc(newPetDocRef, { ownerId }); // เพิ่ม ownerId ลงในสัตว์เลี้ยงใหม่
+    // เพิ่ม ownerId ในสัตว์เลี้ยงใหม่ที่ยังไม่มี ownerId
+    for (const petId of newPetIds) {
+      if (!previousPetIds.includes(petId)) {
+        const petDocRef = doc(petsRef, petId);
+        await updateDoc(petDocRef, { ownerId: ownerId });
+      }
     }
 
     console.log("Owner and pets updated successfully.");
@@ -174,6 +165,7 @@ const updateOwnerInFirebase = async (
     console.error("Error updating owner or pets:", error);
   }
 };
+
 
 const deleteOwnerInFirebase = async (ownerId) => {
   try {
@@ -218,15 +210,15 @@ const deletePetInFirebase = async (petId) => {
 
     // หาว่า pet นี้เกี่ยวข้องกับ owner ไหนบ้าง
     const ownersRef = collection(db, "owners");
-    const q = query(ownersRef, where("petId", "==", petId));
+    const q = query(ownersRef, where("petIds", "array-contains", petId)); // ตรวจสอบว่า petId อยู่ใน array หรือไม่
     const snapshot = await getDocs(q);
 
     if (!snapshot.empty) {
       // ลบ petId จาก owners ที่เกี่ยวข้อง
       const batchPromises = snapshot.docs.map(async (ownerDoc) => {
         if (ownerDoc.exists() && ownerDoc.id) {
-          const ownerDocRef = doc(db, "owners", ownerDoc.id); // ตรวจสอบให้แน่ใจว่า ownerDoc.id มีค่า
-          await updateDoc(ownerDocRef, { petId: null }); // ลบ petId จากเอกสารเจ้าของ
+          const ownerDocRef = doc(db, "owners", ownerDoc.id);
+          await updateDoc(ownerDocRef, { petIds: arrayRemove(petId) }); // ใช้ arrayRemove เพื่อลบ petId ออกจาก array
         } else {
           console.error("Invalid owner document or missing owner id");
         }
@@ -500,7 +492,6 @@ const addAppointmentInDoctor = async (petId, doctorID) => {
 export {
   AddOwnerToFirebase,
   addPetToFirebase,
-  getPetbyId,
   AddVaccine,
   updatePetInFirebase,
   updateOwnerInFirebase,
