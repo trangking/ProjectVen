@@ -47,7 +47,7 @@ const Doctorpage = () => {
       setAppointments(fetchappointment);
     };
     loadData();
-  }, []);
+  }, [pets, vaccine, appointments]);
 
   const showModal = (record) => {
     setTypeStatus("01");
@@ -107,7 +107,7 @@ const Doctorpage = () => {
   return (
     <div className="manage-doctor">
       <div className="header bg-yellow-500 text-white p-4 text-center mb-4">
-        <h1 className="text-3xl font-bold">จัดการข้อมูลหมอ: [ชื่อหมอ]</h1>
+        <h1 className="text-3xl font-bold">จัดการข้อมูลการนัดหมอ: [ชื่อหมอ]</h1>
       </div>
 
       <div className="p-8">
@@ -166,6 +166,7 @@ const Doctorpage = () => {
                   title: "เพิ่มการรักษา",
                   render: (text, record) => (
                     <Button
+                      disabled={record.status === false ? false : true}
                       key={
                         record.id || record.petId || record.nextAppointmentDate
                       }
@@ -261,7 +262,9 @@ const Doctorpage = () => {
               ]}
             >
               <DatePicker
-                value={nextAppointmentDate ? moment(nextAppointmentDate) : null} // แปลงค่าให้เป็น moment object ถ้ามีค่า
+                defaultValue={
+                  nextAppointmentDate ? moment(nextAppointmentDate) : null
+                }
                 onChange={(date, dateString) =>
                   setNextAppointmentDate(dateString)
                 }

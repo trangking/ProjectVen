@@ -147,104 +147,146 @@ export default function ManageAnimals() {
         </div>
       </div>
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-60 flex items-center justify-center z-50 transition-opacity">
-          <div className="bg-white w-full max-w-3xl p-8 rounded-lg shadow-2xl relative">
-            <h2 className="text-center text-2xl font-bold text-green-600 mb-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white w-full max-w-md p-8 rounded-lg shadow-2xl relative">
+            <h2 className="text-center text-2xl font-bold text-gray-800 mb-6">
               {editIndex !== null ? "แก้ไขสัตว์เลี้ยง" : "เพิ่มสัตว์เลี้ยงใหม่"}
             </h2>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="col-span-2">
+
+            <form className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  ชื่อสัตว์เลี้ยง
+                </label>
                 <Input
                   placeholder="ชื่อสัตว์เลี้ยง"
                   value={newPet.name}
                   onChange={(e) =>
                     setNewPet({ ...newPet, name: e.target.value })
                   }
-                  className="py-3 px-4 border border-gray-300 rounded-lg w-full"
+                  className="mt-1 py-2 px-4 border border-gray-300 rounded-md w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
                 />
               </div>
-              <div className="col-span-2">
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  ประเภทสัตว์
+                </label>
                 <Select
                   placeholder="เลือกประเภทสัตว์"
                   value={newPet.type}
                   onChange={(value) => setNewPet({ ...newPet, type: value })}
-                  className="w-full "
+                  className="mt-1 w-full  border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
                 >
                   <Option value="Dog">หมา</Option>
                   <Option value="Cat">แมว</Option>
                   <Option value="Exotic">สัตว์เอ็กโซติก</Option>
                 </Select>
               </div>
+
               {newPet.type === "Exotic" && (
-                <div className="col-span-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    พันธุ์สัตว์
+                  </label>
                   <Select
-                    placeholder={`เลือกพันธุ์${newPet.type}`}
+                    placeholder="เลือกพันธุ์"
                     value={newPet.subType}
                     onChange={(value) =>
                       setNewPet({ ...newPet, subType: value })
                     }
-                    className="w-full "
+                    className="mt-1 w-full py-2 px-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
                   >
                     {breedOptions()}
                   </Select>
                 </div>
               )}
-              <div className="col-span-1">
-                <InputNumber
-                  placeholder="อายุ (ปี)"
-                  value={newPet.years}
-                  min={0}
-                  onChange={(value) => setNewPet({ ...newPet, years: value })}
-                  className="py-3 px-4 border border-gray-300 rounded-lg w-full"
-                />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    อายุ (ปี)
+                  </label>
+                  <InputNumber
+                    placeholder="ปี"
+                    value={newPet.years}
+                    min={0}
+                    onChange={(value) => setNewPet({ ...newPet, years: value })}
+                    className="mt-1 w-full py-2 px-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    อายุ (เดือน)
+                  </label>
+                  <InputNumber
+                    placeholder="เดือน"
+                    value={newPet.months}
+                    min={0}
+                    max={11}
+                    onChange={(value) =>
+                      setNewPet({ ...newPet, months: value })
+                    }
+                    className="mt-1 w-full py-2 px-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
+                  />
+                </div>
               </div>
-              <div className="col-span-1">
-                <InputNumber
-                  placeholder="อายุ (เดือน)"
-                  value={newPet.months}
-                  min={0}
-                  max={11}
-                  onChange={(value) => setNewPet({ ...newPet, months: value })}
-                  className="py-3 px-4 border border-gray-300 rounded-lg w-full"
-                />
-              </div>
+
               <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  สี
+                </label>
                 <Input
                   placeholder="สี"
                   value={newPet.color}
                   onChange={(e) =>
                     setNewPet({ ...newPet, color: e.target.value })
                   }
-                  className="py-3 px-4 border border-gray-300 rounded-lg w-full"
+                  className="mt-1 py-2 px-4 border border-gray-300 rounded-md w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
                 />
               </div>
+
               <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  น้ำหนัก (กิโลกรัม)
+                </label>
                 <Input
-                  placeholder="น้ำหนัก (กิโลกรัม)"
+                  placeholder="น้ำหนัก"
                   value={newPet.weight}
                   onChange={(e) =>
                     setNewPet({ ...newPet, weight: e.target.value })
                   }
-                  className="py-3 px-4 border border-gray-300 rounded-lg w-full"
+                  className="mt-1 py-2 px-4 border border-gray-300 rounded-md w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
                 />
               </div>
-              <div className="col-span-2">
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  เพศ
+                </label>
                 <Select
-                  placeholder="เพศ"
+                  placeholder="เลือกเพศ"
                   value={newPet.gender}
                   onChange={(value) => setNewPet({ ...newPet, gender: value })}
-                  className="w-full"
+                  className="mt-1 w-full  border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
                 >
                   <Option value="Male">เพศผู้</Option>
                   <Option value="Female">เพศเมีย</Option>
                 </Select>
               </div>
-            </div>
-            <div className="flex justify-between items-center mt-8">
-              <Button onClick={closeModal}>ยกเลิก</Button>
+            </form>
+
+            <div className="flex justify-end mt-6 space-x-3">
+              <Button
+                onClick={closeModal}
+                className="py-2 px-6 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition"
+              >
+                ยกเลิก
+              </Button>
               <Button
                 type="primary"
-                className="bg-green-500 text-white py-3 px-6 rounded-lg shadow-md hover:bg-green-600"
+                className="py-2 px-6 bg-green-500 text-white rounded-md hover:bg-green-700 transition"
                 onClick={handleAddOrUpdatePet}
               >
                 {editIndex !== null ? "อัปเดต" : "เพิ่ม"}

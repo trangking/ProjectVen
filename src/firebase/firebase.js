@@ -25,14 +25,15 @@ import {
 } from "firebase/storage";
 import { v4 } from "uuid";
 
+
 const firebaseConfig = {
-  apiKey: "AIzaSyDt4hJzCGHCP2Hp8lQ7Xoxexv7qauYgu-A",
-  authDomain: "appointmentven.firebaseapp.com",
-  projectId: "appointmentven",
-  storageBucket: "appointmentven.appspot.com",
-  messagingSenderId: "1084978936005",
-  appId: "1:1084978936005:web:df525fd313432244a358ac",
-  measurementId: "G-KGC3LCBM55",
+  apiKey: "AIzaSyBd6tZjtTUigPK95U2a3fme4gSqj-eHJdM",
+  authDomain: "animalappointment.firebaseapp.com",
+  projectId: "animalappointment",
+  storageBucket: "animalappointment.appspot.com",
+  messagingSenderId: "493175137626",
+  appId: "1:493175137626:web:3e380f8b0c1426c2e0bf63",
+  measurementId: "G-X9W5BXHZ8R"
 };
 
 // Initialize Firebase
@@ -94,8 +95,6 @@ const AddOwnerToFirebase = async (
   addPhoneMember,
   addAddressMember,
   selectedPetIds, // Multiple pet selection
-  owners,
-  setOwners
 ) => {
   if (!addMember || !addEmailMember || !addPhoneMember || selectedPetIds.length === 0)
     return;
@@ -122,12 +121,51 @@ const AddOwnerToFirebase = async (
       });
     });
     await Promise.all(updatePetPromises);
-    setOwners([...owners, { ...newOwnerData, id: userId }]);
+
     console.log("Owner added and pets updated successfully.");
   } catch (error) {
     console.error("Error adding owner and updating pets:", error);
   }
 };
+
+const AddOwner = async (
+  addMember,
+  addEmailMember,
+  addPhoneMember,
+  addAddressMember,
+  addPassword,
+  selectedPetIds, // Multiple pet selection
+) => {
+  // ตรวจสอบว่าไม่ได้ปล่อยให้ฟิลด์ที่จำเป็นว่างเปล่า
+  // if (!addMember || !addEmailMember || !addPhoneMember || selectedPetIds.length === 0)
+  //   return;
+  try {
+    // สร้างข้อมูลเจ้าของใหม่
+
+    const newOwnerData = {
+      name: addMember,
+      password: addPassword,
+      contact: addEmailMember,
+      phone: addPhoneMember,
+      address: addAddressMember,
+      petIds: selectedPetIds, // เก็บ ID สัตว์เลี้ยงหลายตัว
+    };
+
+    // เพิ่มเจ้าของใหม่ในคอลเล็กชัน owners
+    const ownerRef = await addDoc(collection(db, "owners"), newOwnerData);
+    const updatePetPromises = selectedPetIds.map(async (petId) => {
+      const petDocRef = doc(db, "pets", petId);
+      await updateDoc(petDocRef, {
+        ownerId: ownerRef.id,
+      });
+    });
+    await Promise.all(updatePetPromises);
+    console.log("Owner added and pets updated successfully.");
+  } catch (error) {
+    console.error("Error adding owner and updating pets:", error);
+  }
+};
+
 
 // Update existing owner and change linked pet
 const updateOwnerInFirebase = async (ownerId, updatedOwnerData, previousPetIds, newPetIds) => {
@@ -323,7 +361,6 @@ const AddVaccine = async (newVaccine, img) => {
     return console.log("กรุณาอัพโหลดรูปภาพ");
   }
 
-  // อัปโหลดรูปภาพและรับ URL
   const uploadedImageUrl = await uploadImage(newVaccine.image, type);
 
   const NewVaccine = {
@@ -547,6 +584,7 @@ const fetchedAddPointMent = async () => {
 
 export {
   AddOwnerToFirebase,
+  AddOwner,
   addPetToFirebase,
   AddVaccine,
   updatePetInFirebase,

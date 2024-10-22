@@ -7,6 +7,9 @@ const useStore = create((set) => ({
   addEmailMember: "",
   setEmailMember: (EmailMember) => set({ addEmailMember: EmailMember }),
 
+  addPassword: "",
+  setAddPassword: (newPassword) => set({ addPassword: newPassword }),
+
   addPhoneMember: "",
   setPhoneMember: (PhoneMember) => set({ addPhoneMember: PhoneMember }),
 

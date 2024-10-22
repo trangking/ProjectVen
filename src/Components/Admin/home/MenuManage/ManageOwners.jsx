@@ -5,6 +5,7 @@ import {
   fecthOwners,
   fetchedPets,
   AddOwnerToFirebase,
+  AddOwner,
   updateOwnerInFirebase,
   deleteOwnerInFirebase,
 } from "../../../../firebase/firebase";
@@ -14,6 +15,8 @@ function AddOwnerModal({ isOpen, onClose, pets, owners, setOwners }) {
   const [selectedPetIds, setSelectedPetIds] = useState([]);
   const addMember = useStore((state) => state.addMember);
   const setAddMember = useStore((state) => state.setAddMember);
+  const addPassword = useStore((state) => state.addPassword);
+  const setAddPassword = useStore((state) => state.setAddPassword);
   const addEmailMember = useStore((state) => state.addEmailMember);
   const setEmailMember = useStore((state) => state.setEmailMember);
   const addPhoneMember = useStore((state) => state.addPhoneMember);
@@ -26,22 +29,21 @@ function AddOwnerModal({ isOpen, onClose, pets, owners, setOwners }) {
       !addMember ||
       !addEmailMember ||
       !addPhoneMember ||
-      selectedPetIds.length === 0
+      !addPassword
+      // ||
+      // selectedPetIds.length === 0
     )
       return;
-
     try {
-      await AddOwnerToFirebase(
+      await AddOwner(
         addMember,
         addEmailMember,
         addPhoneMember,
         addAddressMember,
-        selectedPetIds,
-        owners,
-        setOwners
+        addPassword,
+        selectedPetIds
       );
       onClose();
-      window.location.reload();
     } catch (error) {
       console.error("Error adding owner:", error);
     }
@@ -105,6 +107,18 @@ function AddOwnerModal({ isOpen, onClose, pets, owners, setOwners }) {
               placeholder="กรอกเบอร์โทร"
               className="w-full p-4 border border-gray-300 rounded-md"
               onChange={(e) => setPhoneMember(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">
+              รหัสผ่าน
+            </label>
+            <input
+              type="password"
+              placeholder="กรอกรหัสผ่าน"
+              className="w-full p-4 border border-gray-300 rounded-md"
+              onChange={(e) => setAddPassword(e.target.value)}
             />
           </div>
 

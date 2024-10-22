@@ -13,8 +13,7 @@ function Login() {
   const password = useStore((state) => state.password);
   const setEmail = useStore((state) => state.setEmail);
   const setPassword = useStore((state) => state.setPassword);
-  const settoken = useStore((state) => state.settoken);
-  const token = useStore((state) => state.token);
+
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 640) {
@@ -55,7 +54,7 @@ function Login() {
       console.log("Token ถูกบันทึกลงใน localStorage:", token);
       const userId = userCredential.user.uid;
       // ตรวจสอบว่าเป็น admin หรือไม่
-      if (userId === "XQisYFDzRueY6uwH5bUmuPIeUVI2") {
+      if (userId === "nj8r4Rkku8NL8Fi0yDLThBekDV92") {
         navigate("/pageAdmin"); // ถ้าเป็นแอดมินให้ไปที่หน้า Admin
       } else {
         navigate("/member"); // ถ้าไม่ใช่แอดมินให้ไปที่หน้า Member
