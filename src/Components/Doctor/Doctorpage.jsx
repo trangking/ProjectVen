@@ -15,6 +15,8 @@ import {
   addNEwTreatment,
   fetchedPets,
   fetchedVaccine,
+  fetchedAddPointMent,
+  upDateAppointment,
 } from "../../firebase/firebase";
 import moment from "moment";
 
@@ -32,6 +34,8 @@ const Doctorpage = () => {
   const [form] = Form.useForm();
   const [treatmentsdec, setTreatmentsdec] = useState("");
   const [nextAppointmentDate, setNextAppointmentDate] = useState(null);
+  const [typeStatus, setTypeStatus] = useState("");
+  const [apID, setapId] = useState("");
 
   useEffect(() => {
     const loadData = async () => {
@@ -39,30 +43,41 @@ const Doctorpage = () => {
       setPets(fetchedPet);
       const fetchVaccine = await fetchedVaccine();
       setVaccine(fetchVaccine);
+      const fetchappointment = await fetchedAddPointMent();
+      setAppointments(fetchappointment);
     };
     loadData();
   }, []);
 
-  const handleAddAppointment = (values) => {
-    setAppointments([...appointments, values]);
-  };
-
   const showModal = (record) => {
+    setTypeStatus("01");
     setSelectedPet(record);
     setIsModalVisible(true);
   };
-
+  const showModaladdtreatment = (record) => {
+    if (record.pet && record.pet.length > 0) {
+      setSelectedPet(record.pet[0]);
+    } else {
+      console.log("No pet data found");
+    }
+    setapId(record.id);
+    setTypeStatus("02");
+    setIsModalVisible(true);
+  };
   const showModalHistory = async (record) => {
     setSelectedPet(record);
     setOpenHistory(true);
   };
 
   const handleAddTreatment = async () => {
-    if (!selectedPet.id || !vaccineId || !treatmentsdec) {
+    if (!selectedPet.id || !vaccineId) {
       message.error(
         "กรุณากรอกข้อมูลทั้งหมด: สัตว์เลี้ยง, วัคซีน และรายละเอียดการรักษา"
       );
       return;
+    }
+    if (typeStatus === "02") {
+      await upDateAppointment(apID);
     }
     await addNEwTreatment(
       selectedPet.id,
@@ -100,7 +115,7 @@ const Doctorpage = () => {
           <TabPane tab="ตารางวันนัด" key="1">
             <h2 className="text-2xl font-bold mb-4">ตารางวันนัดของหมอ</h2>
 
-            <Form layout="inline" onFinish={handleAddAppointment}>
+            <Form layout="inline">
               <Form.Item
                 name="date"
                 label="วันที่"
@@ -121,14 +136,48 @@ const Doctorpage = () => {
             <Table
               dataSource={appointments}
               columns={[
-                { title: "วันที่", dataIndex: "date", key: "date" },
+                {
+                  title: "วันที่นัด",
+                  dataIndex: "nextAppointmentDate",
+                  key: "nextAppointmentDate",
+                },
+                {
+                  title: "ชื่อสัตว์เลี้ยง",
+                  render: (text, record) => {
+                    return record.pet && record.pet.length > 0
+                      ? record.pet[0].name
+                      : "ไม่มีชื่อสัตว์เลี้ยง";
+                  },
+                  key: "name",
+                },
                 {
                   title: "รายละเอียด",
-                  dataIndex: "description",
+                  dataIndex: ["Latesttreatment", "description"],
                   key: "description",
                 },
+                {
+                  title: "สถานะการรักษา",
+                  dataIndex: "status",
+                  key: "สถานะการรักษา",
+                  render: (status) =>
+                    status === false ? "รอดำเนินการ" : "มาตามนัด",
+                },
+                {
+                  title: "เพิ่มการรักษา",
+                  render: (text, record) => (
+                    <Button
+                      key={
+                        record.id || record.petId || record.nextAppointmentDate
+                      }
+                      onClick={() => showModaladdtreatment(record)}
+                    >
+                      เปิด
+                    </Button>
+                  ),
+                  key: "treatment",
+                },
               ]}
-              rowKey="date"
+              rowKey={(record) => record.id || record.petId}
               className="mt-4"
             />
           </TabPane>
@@ -228,6 +277,7 @@ const Doctorpage = () => {
           visible={openHistory}
           onCancel={handleCancel}
           footer={null}
+          width={1000}
         >
           <div className="bg-pink-100 rounded-lg p-6">
             <table className="min-w-full table-auto border-collapse border border-pink-200">
@@ -264,10 +314,10 @@ const Doctorpage = () => {
                         />
                       </td>
                       <td className="px-4 py-2 border border-pink-300">
-                        {item.dateOfVaccination}
+                        {item.DateVaccination}
                       </td>
                       <td className="px-4 py-2 border border-pink-300">
-                        {item.nextVaccination}
+                        {item.nextAppointmentDate}
                       </td>
                       <td className="px-4 py-2 border border-pink-300">
                         <img
