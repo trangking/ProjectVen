@@ -111,7 +111,7 @@ export default function DrugManage() {
       setVaccineData(fetchedVaccines);
     };
     loadVaccines();
-  }, [setVaccineData]);
+  }, []);
 
   return (
     <div className="container mx-auto p-6">

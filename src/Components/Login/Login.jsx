@@ -54,7 +54,7 @@ function Login() {
       console.log("Token ถูกบันทึกลงใน localStorage:", token);
       const userId = userCredential.user.uid;
       // ตรวจสอบว่าเป็น admin หรือไม่
-      if (userId === "nj8r4Rkku8NL8Fi0yDLThBekDV92") {
+      if (userId === "LR4qbzCjoOcNZ0fmc6j1WjKHI9D2") {
         navigate("/pageAdmin"); // ถ้าเป็นแอดมินให้ไปที่หน้า Admin
       } else {
         navigate("/member"); // ถ้าไม่ใช่แอดมินให้ไปที่หน้า Member

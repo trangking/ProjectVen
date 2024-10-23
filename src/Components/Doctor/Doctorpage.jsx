@@ -9,6 +9,7 @@ import {
   Table,
   Input,
   message,
+  TimePicker,
 } from "antd";
 import { Link } from "react-router-dom";
 import {
@@ -19,6 +20,7 @@ import {
   upDateAppointment,
 } from "../../firebase/firebase";
 import moment from "moment";
+import dayjs from "dayjs";
 
 const { TabPane } = Tabs;
 const { Option } = Select;
@@ -36,7 +38,8 @@ const Doctorpage = () => {
   const [nextAppointmentDate, setNextAppointmentDate] = useState(null);
   const [typeStatus, setTypeStatus] = useState("");
   const [apID, setapId] = useState("");
-
+  const format = "HH:mm";
+  const [selectedTime, setSelectedTime] = useState(dayjs());
   useEffect(() => {
     const loadData = async () => {
       const fetchedPet = await fetchedPets();
@@ -47,12 +50,13 @@ const Doctorpage = () => {
       setAppointments(fetchappointment);
     };
     loadData();
-  }, [pets, vaccine, appointments]);
+  }, []);
 
   const showModal = (record) => {
     setTypeStatus("01");
     setSelectedPet(record);
     setIsModalVisible(true);
+    console.log(record);
   };
   const showModaladdtreatment = (record) => {
     if (record.pet && record.pet.length > 0) {
@@ -102,6 +106,10 @@ const Doctorpage = () => {
     setTreatmentsdec("");
     setNextAppointmentDate(null);
     form.resetFields();
+  };
+  const handleTimeChange = (time) => {
+    setSelectedTime(time); // อัปเดตเวลาที่เลือก
+    console.log(time.format("HH:mm")); // ใช้ method ของ dayjs เพื่อ format เวลา
   };
 
   return (
@@ -270,6 +278,13 @@ const Doctorpage = () => {
                 }
                 style={{ width: "100%" }}
                 placeholder="เลือกวันนัดครั้งถัดไป"
+              />
+            </Form.Item>
+            <Form.Item>
+              <TimePicker
+                defaultValue={dayjs()}
+                format={format}
+                onChange={handleTimeChange}
               />
             </Form.Item>
           </Form>

@@ -27,13 +27,13 @@ import { v4 } from "uuid";
 
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBd6tZjtTUigPK95U2a3fme4gSqj-eHJdM",
-  authDomain: "animalappointment.firebaseapp.com",
-  projectId: "animalappointment",
-  storageBucket: "animalappointment.appspot.com",
-  messagingSenderId: "493175137626",
-  appId: "1:493175137626:web:3e380f8b0c1426c2e0bf63",
-  measurementId: "G-X9W5BXHZ8R"
+  apiKey: "AIzaSyCB_tQwjnuTKgla0sZwnu_Q__zYYiOPBRE",
+  authDomain: "appointmentanimals.firebaseapp.com",
+  projectId: "appointmentanimals",
+  storageBucket: "appointmentanimals.appspot.com",
+  messagingSenderId: "1050401290587",
+  appId: "1:1050401290587:web:334811bfbd2c1fae3e427e",
+  measurementId: "G-CTX071QNLL"
 };
 
 // Initialize Firebase
@@ -320,6 +320,7 @@ const addNewDoctors = async (newDoctor, img) => {
     DoctorName: newDoctor.name,
     Specialty: newDoctor.specialty,
     EmailDoctor: newDoctor.email,
+    Password: newDoctor.password,
     PhoneDoctor: newDoctor.phone,
     Medical_license: uploadedImageUrl, // บันทึก URL ของรูปภาพ
   };
@@ -488,7 +489,7 @@ const addNEwTreatment = async (petId, vaccineId, treatmentsdec, nextAppointmentD
 
       // ถ้ามีการนัดหมายครั้งถัดไป ให้เพิ่มการนัดหมายใหม่
       if (nextAppointmentDate) {
-        const doctorID = "HzQiVbpyy3ImR0JwuJOY"; // ใส่ doctorID ที่ถูกต้อง
+        const doctorID = "JrNzgZuvB6gl78MxjmIG"; // ใส่ doctorID ที่ถูกต้อง
         await addAppointmentInDoctor(petId, doctorID); // Pass petId (string) instead of petDocRef
       }
 

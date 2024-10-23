@@ -42,7 +42,7 @@ export default function ManageAnimals() {
       setPets(fetchedPet);
     };
     loadPets();
-  }, [setPets]);
+  }, []);
 
   const handleDeletePet = async (petId) => {
     try {

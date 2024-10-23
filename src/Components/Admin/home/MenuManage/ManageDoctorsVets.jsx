@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { fetchedDoctors, addNewDoctors } from "../../../../firebase/firebase";
-import { Upload, Button } from "antd";
+import { Upload, Button, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 
 export default function ManageDoctorsVets() {
@@ -9,6 +9,7 @@ export default function ManageDoctorsVets() {
     name: "",
     specialty: "",
     email: "",
+    password: "",
     phone: "",
   });
   const [editIndex, setEditIndex] = useState(null);
@@ -50,7 +51,8 @@ export default function ManageDoctorsVets() {
       try {
         console.log("Adding new doctor with image: ", img);
         await addNewDoctors(newDoctor, img);
-        closeModal();
+        await closeModal();
+        message.success("เพิ่มสำเร็จ");
       } catch (error) {
         console.error("Error adding new doctor:", error);
       }
@@ -70,7 +72,7 @@ export default function ManageDoctorsVets() {
       setDoctors(fetchedDoctor);
     };
     loadDoctors();
-  }, [setDoctors]);
+  }, []);
   return (
     <>
       <div className="w-full h-screen p-10 flex flex-col items-center">
@@ -204,6 +206,15 @@ export default function ManageDoctorsVets() {
                 value={newDoctor.email}
                 onChange={(e) =>
                   setNewDoctor({ ...newDoctor, email: e.target.value })
+                }
+              />{" "}
+              <input
+                type="password"
+                placeholder="่รหัสผ่าน"
+                className="w-full p-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                value={newDoctor.password}
+                onChange={(e) =>
+                  setNewDoctor({ ...newDoctor, password: e.target.value })
                 }
               />
               <input
