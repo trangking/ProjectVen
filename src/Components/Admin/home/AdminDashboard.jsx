@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchedAddPointMent } from "../../../firebase/firebase";
+import {
+  fetchedAddPointMent,
+  GetAddPointMentByfalse,
+  GetAddPointMentBytrue,
+} from "../../../firebase/firebase";
 import { Table, Button, Input, Card, Statistic } from "antd";
 
 // ฟังก์ชันจัดเรียงตามวันที่
-const sortAppointmentsByDate = (appointments) => {
-  return appointments.sort((a, b) => new Date(b.date) - new Date(a.date));
-};
 
 // หน้าจัดการ Admin Dashboard
 export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [appointments, setAppointments] = useState([]);
+  const [appointmentTrue, setappointmentTrue] = useState([]);
+  const [appointmentfalse, setappointmentfalse] = useState([]);
+  const [AppointmentsType, setAppointmentsType] = useState("ดูการนัดทั้งหมด");
 
   // ฟังก์ชันสำหรับยกเลิกการนัดหมาย
   const handleCancelAppointment = (id) => {
@@ -22,7 +26,11 @@ export default function AdminDashboard() {
     const fetchAppointment = async () => {
       try {
         const fetchedAppointments = await fetchedAddPointMent(); // เรียก API หรือฟังก์ชันที่ดึงข้อมูล
-        setAppointments(fetchedAppointments); // ตั้งค่า state หลังจากดึงข้อมูลสำเร็จ
+        setAppointments(fetchedAppointments);
+        const showTableTrue = await GetAddPointMentBytrue();
+        setappointmentTrue(showTableTrue);
+        const showTablefalse = await GetAddPointMentByfalse();
+        setappointmentfalse(showTablefalse); // ตั้งค่า state หลังจากดึงข้อมูลสำเร็จ
       } catch (error) {
         console.error("Error fetching appointments:", error);
       }
@@ -40,7 +48,7 @@ export default function AdminDashboard() {
     },
     {
       title: "เจ้าของ",
-      dataIndex: "owner", // ตรวจสอบว่า owner มีข้อมูลหรือไม่
+      dataIndex: ["owner", "0", "name"], // ตรวจสอบว่า owner มีข้อมูลหรือไม่
       key: "owner",
     },
     {
@@ -50,7 +58,12 @@ export default function AdminDashboard() {
     },
     {
       title: "เวลา",
-      dataIndex: "time", // ตรวจสอบว่ามีฟิลด์ time หรือไม่
+      dataIndex: "TimeAppoinMentDate", // ตรวจสอบว่ามีฟิลด์ time หรือไม่
+      key: "time",
+    },
+    {
+      title: "เบอร์โทร",
+      dataIndex: ["owner", "0", "phone"], // ตรวจสอบว่ามีฟิลด์ time หรือไม่
       key: "time",
     },
     {
@@ -64,28 +77,58 @@ export default function AdminDashboard() {
       key: "actions",
       render: (appointment) => (
         <Button
-          type="primary"
-          style={{ marginRight: "10px" }} // เพิ่มระยะห่างระหว่างปุ่ม
-          // onClick={() => handleEditAppointment(appointment.id)}
+          color="danger"
+          variant="outlined"
+          onClick={() => handleCancelAppointment(appointment.id)}
+          disabled={appointment.status}
         >
-          แก้ไขนัด
+          ยกเลิกนัด
         </Button>
       ),
     },
   ];
+  const handleClikGetAllap = () => {
+    setAppointmentsType("ดูการนัดทั้งหมด");
+  };
+
+  const handleClikTrue = async () => {
+    setAppointmentsType("มาตามนัด");
+  };
+  const handleClikfalse = async () => {
+    setAppointmentsType("กำลังมา");
+  };
 
   return (
     <>
       {/* Section 1: ข้อมูลสถิติ */}
       <div className="p-4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <Statistic title="การนัดหมายทั้งหมด" value={12} />
+        <Card
+          onClick={() => setAppointmentsType("ดูการนัดทั้งหมด")}
+          className="cursor-pointer"
+        >
+          <Statistic
+            title="การนัดหมายทั้งหมด"
+            className="cursor-pointer"
+            value={appointments.length}
+          />
         </Card>
-        <Card>
-          <Statistic title="การนัดหมายที่จะมาถึง" value={8} />
+        <Card
+          onClick={() => setAppointmentsType("กำลังมา")}
+          className="cursor-pointer"
+        >
+          <Statistic
+            title="การนัดหมายที่จะมาถึง"
+            value={appointmentfalse.length}
+          />
         </Card>
-        <Card>
-          <Statistic title="การนัดหมายที่เสร็จสิ้น" value={4} />
+        <Card
+          onClick={() => setAppointmentsType("มาตามนัด")}
+          className="cursor-pointer"
+        >
+          <Statistic
+            title="การนัดหมายที่เสร็จสิ้น"
+            value={appointmentTrue.length}
+          />
         </Card>
         <Card>
           <Statistic title="การนัดหมายที่ถูกยกเลิก" value={0} />
@@ -116,7 +159,15 @@ export default function AdminDashboard() {
         {/* ตารางการนัดหมาย */}
         <Table
           columns={columns}
-          dataSource={appointments}
+          dataSource={
+            AppointmentsType === "ดูการนัดทั้งหมด"
+              ? appointments
+              : AppointmentsType === "มาตามนัด"
+              ? appointmentTrue
+              : AppointmentsType === "กำลังมา"
+              ? appointmentfalse
+              : ""
+          }
           rowKey="id"
           pagination={{ pageSize: 5 }}
         />

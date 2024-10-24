@@ -1,141 +1,157 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import {
+  Form,
+  Input,
+  Button,
+  DatePicker,
+  TimePicker,
+  Select,
+  Card,
+} from "antd";
+import {
+  fecthOwners,
+  fetchedPets,
+  fetchedDoctors,
+} from "../../../firebase/firebase";
 
+const { Option } = Select;
+
+// ฟอร์มนัดหมายสัตว์เลี้ยง
 export default function AppointmentForm() {
-  const [formData, setFormData] = useState({
-    hn: "",
-    petName: "",
-    ownerName: "",
-    doctorName: "",
-    phoneNumber: "",
-    appointmentTime: "",
-  });
+  const [pets, setPets] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [owners, setOwners] = useState([]);
+  const [phoneOwners, setPhoneOwners] = useState("");
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+  useEffect(() => {
+    const loadData = async () => {
+      const fetchedPet = await fetchedPets();
+      setPets(fetchedPet);
+      const fetchedDoctor = await fetchedDoctors();
+      setDoctors(fetchedDoctor);
+      const fetchOwner = await fecthOwners();
+      setOwners(fetchOwner);
+    };
+    loadData();
+  }, []);
 
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
-    console.log("ข้อมูลที่ถูกส่ง:", formData);
+  const handleFormSubmit = (values) => {
+    console.log("ข้อมูลที่ถูกส่ง:", values);
   };
 
   return (
     <div className="flex flex-row w-full h-[80vh] bg-gray-100">
       {/* Form Section */}
-      <div className="min-h-auto flex w-1/2 bg-white p-8 rounded-l-2xl">
-        <div className="w-full max-w-lg mx-auto flex flex-col justify-center">
+      <Card className="min-h-auto flex w-1/2 bg-white p-8 rounded-l-2xl  justify-center">
+        <div className="w-full max-w-lg mx-auto flex flex-col  ">
           <h1 className="text-5xl font-bold text-center mb-8 text-teal-600">
             นัดหมายสัตว์เลี้ยง
           </h1>
 
           {/* Form */}
-          <form
-            onSubmit={handleFormSubmit}
+          <Form
+            onFinish={handleFormSubmit}
+            layout="vertical"
             className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10"
           >
-            {/* HN */}
-            <div>
-              <label className="block text-gray-700 font-semibold">HN</label>
-              <input
-                type="text"
-                name="hn"
-                value={formData.hn}
-                onChange={handleInputChange}
-                className="w-full mt-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
-                placeholder="กรอก HN"
-              />
-            </div>
-
             {/* Pet Name */}
-            <div>
-              <label className="block text-gray-700 font-semibold">
-                ชื่อสัตว์เลี้ยง
-              </label>
-              <input
-                type="text"
-                name="petName"
-                value={formData.petName}
-                onChange={handleInputChange}
-                className="w-full mt-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
-                placeholder="กรอกชื่อสัตว์เลี้ยง"
-              />
-            </div>
+            <Form.Item
+              name="petName"
+              label="ชื่อสัตว์เลี้ยง"
+              rules={[{ required: true, message: "กรุณากรอกชื่อสัตว์เลี้ยง" }]}
+            >
+              <Select placeholder="เลือกชื่อสัตว์เลี้ยง">
+                {pets.map((pets, index) => (
+                  <Option key={index} value={pets.name}>
+                    {pets.name}
+                  </Option>
+                ))}
+              </Select>{" "}
+            </Form.Item>
 
             {/* Owner Name */}
-            <div>
-              <label className="block text-gray-700 font-semibold">
-                ลูกค้า
-              </label>
-              <input
-                type="text"
-                name="ownerName"
-                value={formData.ownerName}
-                onChange={handleInputChange}
-                className="w-full mt-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
-                placeholder="กรอกชื่อลูกค้า"
-              />
-            </div>
+            <Form.Item
+              name="ownerName"
+              label="ลูกค้า"
+              rules={[{ required: true, message: "กรุณากรอกชื่อลูกค้า" }]}
+            >
+              <Select placeholder="เลือกชื่อลูกค้า">
+                {owners.map((owner, index) => (
+                  <Option key={index} value={owner.name}>
+                    {owner.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
 
             {/* Doctor Name */}
-            <div>
-              <label className="block text-gray-700 font-semibold">
-                ชื่อแพทย์
-              </label>
-              <input
-                type="text"
-                name="doctorName"
-                value={formData.doctorName}
-                onChange={handleInputChange}
-                className="w-full mt-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
-                placeholder="กรอกชื่อแพทย์"
-              />
-            </div>
+            <Form.Item
+              name="doctorName"
+              label="ชื่อแพทย์"
+              rules={[{ required: true, message: "กรุณากรอกชื่อแพทย์" }]}
+            >
+              <Select placeholder="เลือกชื่อแพทย์">
+                {doctors.map((doctor, index) => (
+                  <Option key={index} value={doctor.name}>
+                    {doctor.DoctorName}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
 
             {/* Phone Number */}
-            <div>
-              <label className="block text-gray-700 font-semibold">
-                เบอร์โทร
-              </label>
-              <input
-                type="text"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleInputChange}
-                className="w-full mt-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
-                placeholder="กรอกเบอร์โทร"
-              />
-            </div>
+            <Form.Item
+              name="phoneNumber"
+              label="เบอร์โทร"
+              rules={[
+                {
+                  required: true,
+                  message: "กรุณากรอกเบอร์โทร",
+                },
+              ]}
+            >
+              <Input placeholder="กรอกเบอร์โทร" disabled value={owners.phone} />
+            </Form.Item>
 
             {/* Appointment Time */}
-            <div>
-              <label className="block text-gray-700 font-semibold">
-                เวลานัดหมาย
-              </label>
-              <input
-                type="datetime-local"
-                name="appointmentTime"
-                value={formData.appointmentTime}
-                onChange={handleInputChange}
-                className="w-full mt-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
-              />
-            </div>
+            <Form.Item
+              name="appointmentDate"
+              label="วันที่นัดหมาย"
+              rules={[
+                {
+                  required: true,
+                  message: "กรุณาเลือกวันที่นัดหมาย",
+                },
+              ]}
+            >
+              <DatePicker format="YYYY-MM-DD" className="w-full" />
+            </Form.Item>
+
+            <Form.Item
+              name="appointmentTime"
+              label="เวลานัดหมาย"
+              rules={[
+                {
+                  required: true,
+                  message: "กรุณาเลือกเวลานัดหมาย",
+                },
+              ]}
+            >
+              <TimePicker format="HH:mm" className="w-full" />
+            </Form.Item>
 
             {/* Submit Button */}
-            <div className="col-span-1 md:col-span-2 flex w-full justify-center mt-6">
-              <button
-                type="submit"
-                className="w-1/2 bg-teal-500 text-white font-semibold py-3 rounded-lg shadow-lg hover:bg-teal-400 transition"
-              >
+            <Form.Item className="col-span-1 md:col-span-2 flex w-full justify-center mt-6">
+              <Button type="primary" htmlType="submit" className="w-full">
                 ยืนยันนัดหมาย
-              </button>
-            </div>
-          </form>
+              </Button>
+            </Form.Item>
+          </Form>
         </div>
-      </div>
+      </Card>
 
       {/* Image Section */}
-      <div className="w-1/2 h-auto ">
+      <div className="w-1/2 h-auto">
         <img
           src="/image/vet.webp"
           alt="Veterinarian and Pet"

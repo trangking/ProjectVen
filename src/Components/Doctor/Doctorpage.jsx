@@ -40,6 +40,7 @@ const Doctorpage = () => {
   const [apID, setapId] = useState("");
   const format = "HH:mm";
   const [selectedTime, setSelectedTime] = useState(dayjs());
+  const [ownerId, setOwnerId] = useState("");
   useEffect(() => {
     const loadData = async () => {
       const fetchedPet = await fetchedPets();
@@ -56,11 +57,16 @@ const Doctorpage = () => {
     setTypeStatus("01");
     setSelectedPet(record);
     setIsModalVisible(true);
-    console.log(record);
+    setOwnerId(record.ownerId);
   };
   const showModaladdtreatment = (record) => {
     if (record.pet && record.pet.length > 0) {
       setSelectedPet(record.pet[0]);
+    } else {
+      console.log("No pet data found");
+    }
+    if (record.pet && record.owner.length > 0) {
+      setOwnerId(record.owner[0].id);
     } else {
       console.log("No pet data found");
     }
@@ -87,7 +93,9 @@ const Doctorpage = () => {
       selectedPet.id,
       vaccineId,
       treatmentsdec,
-      nextAppointmentDate
+      nextAppointmentDate,
+      selectedTime,
+      ownerId
     );
     setIsModalVisible(false);
     message.success("เพิ่มการรักษาเรียบร้อยแล้ว");
@@ -95,7 +103,9 @@ const Doctorpage = () => {
     setVaccineId("");
     setTreatmentsdec("");
     setNextAppointmentDate(null);
+    setSelectedTime(null);
     form.resetFields();
+    handleCancel();
   };
 
   const handleCancel = () => {
@@ -105,6 +115,7 @@ const Doctorpage = () => {
     setVaccineId("");
     setTreatmentsdec("");
     setNextAppointmentDate(null);
+    setSelectedTime(null);
     form.resetFields();
   };
   const handleTimeChange = (time) => {
@@ -150,13 +161,14 @@ const Doctorpage = () => {
                   key: "nextAppointmentDate",
                 },
                 {
+                  title: "เวลา",
+                  dataIndex: "TimeAppoinMentDate",
+                  key: "time",
+                },
+                {
                   title: "ชื่อสัตว์เลี้ยง",
-                  render: (text, record) => {
-                    return record.pet && record.pet.length > 0
-                      ? record.pet[0].name
-                      : "ไม่มีชื่อสัตว์เลี้ยง";
-                  },
-                  key: "name",
+                  dataIndex: ["pet", "0", "name"],
+                  key: "petName",
                 },
                 {
                   title: "รายละเอียด",
@@ -281,11 +293,16 @@ const Doctorpage = () => {
               />
             </Form.Item>
             <Form.Item>
-              <TimePicker
-                defaultValue={dayjs()}
-                format={format}
-                onChange={handleTimeChange}
-              />
+              <div className="flex flex-col">
+                <label>
+                  เวลาการนัด(ถ้าไม่กรอกอะไรลงไป ระบบจะบอกว่าไม่มีนัด)
+                </label>
+                <TimePicker
+                  className="mt-2"
+                  format={format}
+                  onChange={handleTimeChange}
+                />
+              </div>
             </Form.Item>
           </Form>
         </Modal>
