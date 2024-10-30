@@ -25,6 +25,7 @@ import {
   deleteObject,
 } from "firebase/storage";
 import { v4 } from "uuid";
+import { message } from "antd";
 
 
 
@@ -597,16 +598,15 @@ const addAppointmentInAdmin = async (AddAppointment) => {
     const ownerData = GetDocOwner.data();
 
     if (!petData || !doctorData || !ownerData) {
-      console.error("Pet or doctor data not found.");
-      return;
+      return { message: "Pet, doctor, or owner data not found." };
     }
 
     // ตรวจสอบว่า historytreatments เป็น array และมีข้อมูล
     const historytreatments = petData.historytreatments;
     if (!Array.isArray(historytreatments) || historytreatments.length === 0) {
-      console.error("No history treatments found for this pet.");
-      return;
+      return { message: "No history treatments found for this pet." }
     }
+
     // เข้าถึงรายการล่าสุดใน historytreatments
     const latestTreatment = historytreatments[historytreatments.length - 1];
     // ตรวจสอบว่ามี nextAppointmentDate หรือไม่ในรายการล่าสุด
@@ -633,7 +633,7 @@ const addAppointmentInAdmin = async (AddAppointment) => {
 
     const docRef = await addDoc(collection(db, "appointment"), AddAppointMent);
     console.log("Appointment added successfully");
-    return docRef.id;
+    return { success: true, id: docRef.id };
 
   } catch (error) {
     console.error("Error adding appointment: ", error); // แสดงข้อผิดพลาด

@@ -44,10 +44,16 @@ export default function AppointmentForm() {
 
   const handleFormSubmit = async () => {
     try {
-      await addAppointmentInAdmin(AddAppointment);
-      message.success("เพิ่มการนัดหมายเสร็จสิ้น");
+      const result = await addAppointmentInAdmin(AddAppointment);
+      if (result.success) {
+        message.success("เพิ่มการนัดหมายเสร็จสิ้น");
+      } else {
+        message.error(
+          result.message || "An error occurred while adding the appointment."
+        );
+      }
     } catch (err) {
-      message.error(err);
+      message.error("Error: " + err.message);
     }
   };
 
