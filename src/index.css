@@ -186,6 +186,13 @@ img {
   font-size: var(--small-font-size);
 }
 
+:where(
+    .css-dev-only-do-not-override-5wsri9
+  ).ant-input-outlined.ant-input-disabled,
+:where(.css-dev-only-do-not-override-5wsri9).ant-input-outlined[disabled] {
+  color: #1e1c1c;
+}
+
 /*=============== BREAKPOINTS ===============*/
 /* For medium devices */
 @media screen and (min-width: 576px) {

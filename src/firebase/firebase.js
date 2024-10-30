@@ -578,9 +578,67 @@ const addAppointmentInDoctor = async (petId, doctorID, formattedTime, ownerId) =
   }
 };
 
-const appointmentInAdmin = () => {
 
-}
+const addAppointmentInAdmin = async (AddAppointment) => {
+  console.log("obj", AddAppointment);
+  try {
+    const petDocRef = doc(db, "pets", AddAppointment.petId); // เอกสารสัตว์เลี้ยง
+    const doctorDocRef = doc(db, "doctorsVen", AddAppointment.doctorID); // เอกสารแพทย์
+    const ownerDocRef = doc(db, "owners", AddAppointment.ownerId); // เอกสารเจ้าของ
+
+
+    // ดึงข้อมูลสัตว์เลี้ยงและแพทย์
+    const GetDocpet = await getDoc(petDocRef);
+    const GetDoctor = await getDoc(doctorDocRef);
+    const GetDocOwner = await getDoc(ownerDocRef)
+    // ตรวจสอบว่าข้อมูลของสัตว์เลี้ยงและแพทย์มีอยู่
+    const petData = GetDocpet.data();
+    const doctorData = GetDoctor.data();
+    const ownerData = GetDocOwner.data();
+
+    if (!petData || !doctorData || !ownerData) {
+      console.error("Pet or doctor data not found.");
+      return;
+    }
+
+    // ตรวจสอบว่า historytreatments เป็น array และมีข้อมูล
+    const historytreatments = petData.historytreatments;
+    if (!Array.isArray(historytreatments) || historytreatments.length === 0) {
+      console.error("No history treatments found for this pet.");
+      return;
+    }
+    // เข้าถึงรายการล่าสุดใน historytreatments
+    const latestTreatment = historytreatments[historytreatments.length - 1];
+    // ตรวจสอบว่ามี nextAppointmentDate หรือไม่ในรายการล่าสุด
+    const pets = {
+      id: GetDocpet.id,
+      name: petData.name,
+    }
+    const owners = {
+      id: GetDocOwner.id,
+      name: ownerData.name,
+      phone: ownerData.phone
+    }
+    // สร้างข้อมูลการนัดหมายใหม่
+    const AddAppointMent = {
+      owner: arrayUnion(owners),
+      pet: arrayUnion(pets),
+      Latesttreatment: latestTreatment, // ข้อมูลการรักษาล่าสุดของสัตว์เลี้ยง
+      doctorID: GetDoctor.id, // ใช้ .id จาก GetDoctor สำหรับไอดีเอกสารแพทย์
+      doctorName: doctorData.DoctorName || "Unknown Doctor", // ตรวจสอบว่ามีชื่อแพทย์ในข้อมูลหรือไม่
+      nextAppointmentDate: AddAppointment.nextAppointmentDate,
+      TimeAppoinMentDate: AddAppointment.selectedTime,
+      status: false, // สถานะการนัดหมาย
+    };
+
+    const docRef = await addDoc(collection(db, "appointment"), AddAppointMent);
+    console.log("Appointment added successfully");
+    return docRef.id;
+
+  } catch (error) {
+    console.error("Error adding appointment: ", error); // แสดงข้อผิดพลาด
+  }
+};
 
 const upDateAppointment = async (apID) => {
   try {
@@ -624,6 +682,7 @@ const GetAddPointMentBytrue = async () => {
 
   }
 }
+
 const GetAddPointMentByfalse = async () => {
   try {
     const colRef = collection(db, "appointment");
@@ -638,6 +697,29 @@ const GetAddPointMentByfalse = async () => {
     console.log(error, "ไม่พบข้อมูล");
   }
 }
+
+const getOwnerByIdpet = async (ownerId) => {
+  try {
+    const docRef = doc(db, "owners", ownerId); // Reference to the document by ID
+    const getData = await getDoc(docRef);
+
+    if (getData.exists()) {
+      const ownerData = getData.data(); // Retrieve the document data
+      console.log(ownerData);
+      return ownerData; // Return the owner data
+    } else {
+      console.log("ไม่พบข้อมูล"); // Log if no document is found
+      return null; // Return null or handle as needed
+    }
+
+  } catch (error) {
+    console.log(error, "ไม่พบข้อมูล");
+    return null; // Return null or handle error as needed
+  }
+};
+
+
+
 
 export {
   AddOwnerToFirebase,
@@ -660,6 +742,8 @@ export {
   upDateAppointment,
   GetAddPointMentBytrue,
   GetAddPointMentByfalse,
+  getOwnerByIdpet,
+  addAppointmentInAdmin,
   auth,
   db,
   storage,

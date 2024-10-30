@@ -7,21 +7,30 @@ import {
   TimePicker,
   Select,
   Card,
+  message,
 } from "antd";
+
 import {
-  fecthOwners,
   fetchedPets,
   fetchedDoctors,
+  getOwnerByIdpet,
+  addAppointmentInAdmin,
 } from "../../../firebase/firebase";
 
 const { Option } = Select;
 
-// ฟอร์มนัดหมายสัตว์เลี้ยง
 export default function AppointmentForm() {
   const [pets, setPets] = useState([]);
   const [doctors, setDoctors] = useState([]);
-  const [owners, setOwners] = useState([]);
-  const [phoneOwners, setPhoneOwners] = useState("");
+  const [showOwners, setshowOwners] = useState([]);
+  const [form] = Form.useForm();
+  const [AddAppointment, setAddAppointment] = useState({
+    petId: "",
+    ownerId: "",
+    nextAppointmentDate: "",
+    selectedTime: "",
+    doctorID: "",
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -29,27 +38,74 @@ export default function AppointmentForm() {
       setPets(fetchedPet);
       const fetchedDoctor = await fetchedDoctors();
       setDoctors(fetchedDoctor);
-      const fetchOwner = await fecthOwners();
-      setOwners(fetchOwner);
     };
     loadData();
   }, []);
 
-  const handleFormSubmit = (values) => {
-    console.log("ข้อมูลที่ถูกส่ง:", values);
+  const handleFormSubmit = async () => {
+    try {
+      await addAppointmentInAdmin(AddAppointment);
+      message.success("เพิ่มการนัดหมายเสร็จสิ้น");
+    } catch (err) {
+      message.error(err);
+    }
+  };
+
+  const onchangePets = async ({ id, ownerId }) => {
+    setAddAppointment((prevAppointments) => ({
+      ...prevAppointments,
+      petId: id,
+      ownerId: ownerId,
+    }));
+
+    try {
+      const response = await getOwnerByIdpet(ownerId); // Await the Promise to resolve
+      form.setFieldsValue({
+        ownerName: response.name,
+        phoneNumber: response.phone,
+      });
+    } catch (err) {
+      console.log(err, "ไม่พบข้อมูล");
+    }
+  };
+
+  const onchangeDoctor = (value) => {
+    setAddAppointment((prevAppointments) => ({
+      ...prevAppointments,
+      doctorID: value,
+    }));
+  };
+
+  // Handle date change
+  const onDateChange = (date) => {
+    const formattedDate = date ? date.format("YYYY-MM-DD") : "";
+    setAddAppointment((prevAppointments) => ({
+      ...prevAppointments,
+      nextAppointmentDate: formattedDate,
+    }));
+  };
+
+  // Handle time change
+  const onTimeChange = (time) => {
+    const formattedTime = time ? time.format("HH:mm") : "";
+    setAddAppointment((prevAppointments) => ({
+      ...prevAppointments,
+      selectedTime: formattedTime,
+    }));
   };
 
   return (
     <div className="flex flex-row w-full h-[80vh] bg-gray-100">
       {/* Form Section */}
-      <Card className="min-h-auto flex w-1/2 bg-white p-8 rounded-l-2xl  justify-center">
-        <div className="w-full max-w-lg mx-auto flex flex-col  ">
+      <Card className="min-h-auto flex w-1/2 bg-white p-8 rounded-l-2xl justify-center">
+        <div className="w-full max-w-lg mx-auto flex flex-col">
           <h1 className="text-5xl font-bold text-center mb-8 text-teal-600">
-            นัดหมายสัตว์เลี้ยง
+            นัดหมายสัตว์เลี้ยง {showOwners.name}
           </h1>
 
           {/* Form */}
           <Form
+            form={form}
             onFinish={handleFormSubmit}
             layout="vertical"
             className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10"
@@ -60,13 +116,19 @@ export default function AppointmentForm() {
               label="ชื่อสัตว์เลี้ยง"
               rules={[{ required: true, message: "กรุณากรอกชื่อสัตว์เลี้ยง" }]}
             >
-              <Select placeholder="เลือกชื่อสัตว์เลี้ยง">
-                {pets.map((pets, index) => (
-                  <Option key={index} value={pets.name}>
-                    {pets.name}
+              <Select
+                placeholder="เลือกชื่อสัตว์เลี้ยง"
+                onChange={(value) => {
+                  const [id, ownerId] = value.split(",");
+                  onchangePets({ id, ownerId });
+                }}
+              >
+                {pets.map((pet, index) => (
+                  <Option key={index} value={`${pet.id},${pet.ownerId}`}>
+                    {pet.name}
                   </Option>
                 ))}
-              </Select>{" "}
+              </Select>
             </Form.Item>
 
             {/* Owner Name */}
@@ -75,13 +137,7 @@ export default function AppointmentForm() {
               label="ลูกค้า"
               rules={[{ required: true, message: "กรุณากรอกชื่อลูกค้า" }]}
             >
-              <Select placeholder="เลือกชื่อลูกค้า">
-                {owners.map((owner, index) => (
-                  <Option key={index} value={owner.name}>
-                    {owner.name}
-                  </Option>
-                ))}
-              </Select>
+              <Input placeholder="กรอกชื่อเจ้าของ" disabled />
             </Form.Item>
 
             {/* Doctor Name */}
@@ -90,9 +146,9 @@ export default function AppointmentForm() {
               label="ชื่อแพทย์"
               rules={[{ required: true, message: "กรุณากรอกชื่อแพทย์" }]}
             >
-              <Select placeholder="เลือกชื่อแพทย์">
+              <Select placeholder="เลือกชื่อแพทย์" onChange={onchangeDoctor}>
                 {doctors.map((doctor, index) => (
-                  <Option key={index} value={doctor.name}>
+                  <Option key={index} value={doctor.id}>
                     {doctor.DoctorName}
                   </Option>
                 ))}
@@ -103,41 +159,35 @@ export default function AppointmentForm() {
             <Form.Item
               name="phoneNumber"
               label="เบอร์โทร"
-              rules={[
-                {
-                  required: true,
-                  message: "กรุณากรอกเบอร์โทร",
-                },
-              ]}
+              rules={[{ required: true, message: "กรุณากรอกเบอร์โทร" }]}
             >
-              <Input placeholder="กรอกเบอร์โทร" disabled value={owners.phone} />
+              <Input placeholder="กรอกเบอร์โทร" disabled />
+            </Form.Item>
+
+            {/* Appointment Date */}
+            <Form.Item
+              name="appointmentDate"
+              label="วันที่นัดหมาย"
+              rules={[{ required: true, message: "กรุณาเลือกวันที่นัดหมาย" }]}
+            >
+              <DatePicker
+                format="YYYY-MM-DD"
+                className="w-full"
+                onChange={onDateChange}
+              />
             </Form.Item>
 
             {/* Appointment Time */}
             <Form.Item
-              name="appointmentDate"
-              label="วันที่นัดหมาย"
-              rules={[
-                {
-                  required: true,
-                  message: "กรุณาเลือกวันที่นัดหมาย",
-                },
-              ]}
-            >
-              <DatePicker format="YYYY-MM-DD" className="w-full" />
-            </Form.Item>
-
-            <Form.Item
               name="appointmentTime"
               label="เวลานัดหมาย"
-              rules={[
-                {
-                  required: true,
-                  message: "กรุณาเลือกเวลานัดหมาย",
-                },
-              ]}
+              rules={[{ required: true, message: "กรุณาเลือกเวลานัดหมาย" }]}
             >
-              <TimePicker format="HH:mm" className="w-full" />
+              <TimePicker
+                format="HH:mm"
+                className="w-full"
+                onChange={onTimeChange}
+              />
             </Form.Item>
 
             {/* Submit Button */}
