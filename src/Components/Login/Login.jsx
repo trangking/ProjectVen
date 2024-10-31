@@ -66,14 +66,7 @@ function Login() {
   };
 
   return (
-    <div
-      className="relative h-screen grid place-items-center bg-no-repeat bg-cover"
-      style={{
-        backgroundImage: "url('image/1.webp')",
-        backgroundSize: bgSize,
-        backgroundPosition: bgPosition,
-      }}
-    >
+    <div className="relative h-screen grid place-items-center bg-no-repeat bg-cover">
       <form
         className="relative bg-opacity-70 bg-white backdrop-blur-lg border border-gray-200 p-10 rounded-lg shadow-lg max-w-lg w-full"
         onSubmit={checkLogin} // ใช้ checkLogin เมื่อผู้ใช้กดปุ่ม Login

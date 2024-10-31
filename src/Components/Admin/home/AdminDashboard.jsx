@@ -87,16 +87,6 @@ export default function AdminDashboard() {
       ),
     },
   ];
-  const handleClikGetAllap = () => {
-    setAppointmentsType("ดูการนัดทั้งหมด");
-  };
-
-  const handleClikTrue = async () => {
-    setAppointmentsType("มาตามนัด");
-  };
-  const handleClikfalse = async () => {
-    setAppointmentsType("กำลังมา");
-  };
 
   return (
     <>
@@ -169,7 +159,7 @@ export default function AdminDashboard() {
               : ""
           }
           rowKey="id"
-          pagination={{ pageSize: 5 }}
+          pagination={{ pageSize: 10 }}
         />
       </div>
     </>

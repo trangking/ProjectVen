@@ -25,9 +25,6 @@ import {
   deleteObject,
 } from "firebase/storage";
 import { v4 } from "uuid";
-import { message } from "antd";
-
-
 
 const firebaseConfig = {
   apiKey: "AIzaSyCB_tQwjnuTKgla0sZwnu_Q__zYYiOPBRE",
