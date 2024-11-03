@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth"; // import Firebase authentication
-import { auth } from "../../firebase/firebase"; // นำเข้า auth จาก Firebase
+import { auth, fecthOwners, fetchedDoctors, db } from "../../firebase/firebase"; // นำเข้า auth จาก Firebase
 import useStore from "../../store"; // import useStore
+import { doc, getDoc } from "firebase/firestore";
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,6 +14,7 @@ function Login() {
   const password = useStore((state) => state.password);
   const setEmail = useStore((state) => state.setEmail);
   const setPassword = useStore((state) => state.setPassword);
+  const [dataUser, setdataUser] = useState([]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -37,31 +39,58 @@ function Login() {
 
   const checkLogin = async (event) => {
     event.preventDefault();
-
     try {
+      // Authenticate user with Firebase Auth
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
         password
       );
-
-      // ดึง token ของผู้ใช้
-      const tokenResult = await userCredential.user.getIdTokenResult();
-      const token = tokenResult.token;
-
-      // บันทึก token ลงใน localStorage
-      localStorage.setItem("token", token);
-      console.log("Token ถูกบันทึกลงใน localStorage:", token);
       const userId = userCredential.user.uid;
-      // ตรวจสอบว่าเป็น admin หรือไม่
+      console.log(userId);
       if (userId === "LR4qbzCjoOcNZ0fmc6j1WjKHI9D2") {
+        const tokenResult = await userCredential.user.getIdTokenResult();
+        const token = tokenResult.token;
+        localStorage.setItem("token", token);
+        console.log("Token ถูกบันทึกลงใน localStorage:", token);
+        localStorage.setItem("Id", userId);
         navigate("/pageAdmin"); // ถ้าเป็นแอดมินให้ไปที่หน้า Admin
       } else {
-        navigate("/member"); // ถ้าไม่ใช่แอดมินให้ไปที่หน้า Member
+        const ownerDocRef = doc(db, "owners", userId);
+        const doctorDocRef = doc(db, "doctorsVen", userId);
+
+        const ownerDoc = await getDoc(ownerDocRef);
+        const doctorDoc = await getDoc(doctorDocRef);
+
+        if (ownerDoc.exists()) {
+          // User is an owner
+          const ownerData = ownerDoc.data();
+          if (ownerData.roleType === "user") {
+            navigate("/member"); // Redirect to Owner Dashboard
+          }
+        } else if (doctorDoc.exists()) {
+          // User is a doctor
+          const doctorData = doctorDoc.data();
+          if (doctorData.roleType === "doctor") {
+            navigate("/doctorPage"); // Redirect to Doctor Dashboard
+          }
+        } else {
+          // If no matching document is found, handle the case as needed
+          console.error("User document not found in either collection.");
+          alert("User role not identified. Please contact support.");
+        }
+        const tokenResult = await userCredential.user.getIdTokenResult();
+        const token = tokenResult.token;
+
+        // บันทึก token ลงใน localStorage
+        localStorage.setItem("token", token);
+        console.log("Token ถูกบันทึกลงใน localStorage:", token);
+        localStorage.setItem("Id", userId);
       }
+      // Check both collections for the user’s document
     } catch (error) {
-      console.error("เกิดข้อผิดพลาดในการเข้าสู่ระบบ:", error);
-      alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+      console.error("Error during login:", error);
+      alert("Incorrect email or password");
     }
   };
 

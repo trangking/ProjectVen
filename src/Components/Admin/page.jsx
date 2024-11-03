@@ -9,7 +9,8 @@ import {
 } from "@heroicons/react/outline";
 import { Outlet } from "react-router-dom";
 import { FaMedkit, FaSignOutAlt } from "react-icons/fa";
-import useStore from "../../store";
+import useStore from "../../store"; // นำเข้า useStore
+
 // ลิงก์ของ Sidebar
 const sidebarLinks = [
   {
@@ -27,11 +28,6 @@ const sidebarLinks = [
     path: "DrugManage",
     icon: <FaMedkit className="h-6 w-6" />,
   },
-  {
-    name: "ออกจากระบบ",
-    path: "/",
-    icon: <FaSignOutAlt className="h-6 w-6" />,
-  },
 ];
 
 export default function Page() {
@@ -39,6 +35,9 @@ export default function Page() {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const token = localStorage.getItem("token");
+
+  // ดึงฟังก์ชัน logout จาก Zustand store
+  const logout = useStore((state) => state.logout);
 
   useEffect(() => {
     if (location.pathname === "/pageAdmin") {
@@ -110,6 +109,18 @@ export default function Page() {
                   </Link>
                 </li>
               ))}
+              <li className="mb-4">
+                <button
+                  onClick={() => {
+                    logout();
+                    navigate("/"); // ไปหน้าเข้าสู่ระบบ
+                  }}
+                  className="flex items-center px-6 py-2 text-gray-600 hover:bg-blue-100 hover:text-blue-600 transition duration-300 w-full text-left"
+                >
+                  <FaSignOutAlt className="h-6 w-6" />
+                  <span className="ml-3">ออกจากระบบ</span>
+                </button>
+              </li>
             </ul>
           </nav>
         </aside>

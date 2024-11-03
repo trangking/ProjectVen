@@ -1,74 +1,74 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import {
   fetchedAddPointMent,
   GetAddPointMentByfalse,
   GetAddPointMentBytrue,
+  confirmAppointment,
+  GetAddPointMentByCannel,
 } from "../../../firebase/firebase";
-import { Table, Button, Input, Card, Statistic } from "antd";
+import { Table, Button, Input, Card, Statistic, message, Select } from "antd";
 
-// ฟังก์ชันจัดเรียงตามวันที่
+const { Option } = Select;
 
-// หน้าจัดการ Admin Dashboard
 export default function AdminDashboard() {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTermPet, setSearchTermPet] = useState(""); // คำค้นหาสำหรับชื่อสัตว์เลี้ยง
+  const [searchTermOwner, setSearchTermOwner] = useState(""); // คำค้นหาสำหรับชื่อเจ้าของ
   const [appointments, setAppointments] = useState([]);
   const [appointmentTrue, setappointmentTrue] = useState([]);
   const [appointmentfalse, setappointmentfalse] = useState([]);
+  const [appointmentCanel, setappointmentCanel] = useState([]);
   const [AppointmentsType, setAppointmentsType] = useState("ดูการนัดทั้งหมด");
-
-  // ฟังก์ชันสำหรับยกเลิกการนัดหมาย
-  const handleCancelAppointment = (id) => {
-    console.log("ยกเลิกการนัดหมาย ID:", id);
-  };
+  const [confirmStatus, setconfirmStatus] = useState(false);
+  const [TypeconfirmStatus, setTypeconfirmStatus] = useState(true);
 
   useEffect(() => {
     const fetchAppointment = async () => {
       try {
-        const fetchedAppointments = await fetchedAddPointMent(); // เรียก API หรือฟังก์ชันที่ดึงข้อมูล
-        setAppointments(fetchedAppointments);
+        const fetchedAppointments = await fetchedAddPointMent();
+        await setAppointments(fetchedAppointments);
         const showTableTrue = await GetAddPointMentBytrue();
-        setappointmentTrue(showTableTrue);
+        await setappointmentTrue(showTableTrue);
         const showTablefalse = await GetAddPointMentByfalse();
-        setappointmentfalse(showTablefalse); // ตั้งค่า state หลังจากดึงข้อมูลสำเร็จ
+        await setappointmentfalse(showTablefalse);
+        const showTablecannel = await GetAddPointMentByCannel();
+        await setappointmentCanel(showTablecannel);
       } catch (error) {
         console.error("Error fetching appointments:", error);
       }
     };
 
-    fetchAppointment(); // เรียกฟังก์ชันเพื่อดึงข้อมูลเมื่อ component โหลด
-  }, []); // ไม่มี dependency array เพื่อให้ทำงานเพียงครั้งเดียว
+    fetchAppointment();
+  }, []);
 
-  // กำหนดคอลัมน์สำหรับตาราง
   const columns = [
     {
       title: "ชื่อสัตว์เลี้ยง",
-      dataIndex: ["pet", "0", "name"], // ตรวจสอบว่า pet[0] มี name จริงหรือไม่
+      dataIndex: ["pet", "0", "name"],
       key: "petName",
     },
     {
       title: "เจ้าของ",
-      dataIndex: ["owner", "0", "name"], // ตรวจสอบว่า owner มีข้อมูลหรือไม่
+      dataIndex: ["owner", "0", "name"],
       key: "owner",
     },
     {
       title: "วันที่",
-      dataIndex: "nextAppointmentDate", // ตรวจสอบว่ามีฟิลด์ nextAppointmentDate หรือไม่
+      dataIndex: "nextAppointmentDate",
       key: "date",
     },
     {
       title: "เวลา",
-      dataIndex: "TimeAppoinMentDate", // ตรวจสอบว่ามีฟิลด์ time หรือไม่
+      dataIndex: "TimeAppoinMentDate",
       key: "time",
     },
     {
       title: "เบอร์โทร",
-      dataIndex: ["owner", "0", "phone"], // ตรวจสอบว่ามีฟิลด์ time หรือไม่
-      key: "time",
+      dataIndex: ["owner", "0", "phone"],
+      key: "phone",
     },
     {
       title: "สถานะ",
-      dataIndex: "status", // ตรวจสอบว่ามีฟิลด์ status หรือไม่
+      dataIndex: "status",
       key: "status",
       render: (status) => (status ? "มาตามนัด" : "กำลังมา"),
     },
@@ -76,17 +76,74 @@ export default function AdminDashboard() {
       title: "การจัดการ",
       key: "actions",
       render: (appointment) => (
-        <Button
-          color="danger"
-          variant="outlined"
-          onClick={() => handleCancelAppointment(appointment.id)}
-          disabled={appointment.status}
+        <div
+          style={{
+            pointerEvents: appointment.status ? "none" : "auto",
+            opacity: appointment.status ? 0.5 : 1,
+          }}
         >
-          ยกเลิกนัด
-        </Button>
+          <Button
+            color="primary"
+            variant="outlined"
+            onClick={() => {
+              confirmAddponitment(appointment.id);
+              setTypeconfirmStatus("ยืนยัน");
+            }}
+            style={{ marginRight: "8px" }}
+          >
+            ยันนัดหมาย
+          </Button>
+
+          <Button
+            color="danger"
+            variant="outlined"
+            onClick={() => {
+              confirmAddponitment(appointment.id);
+              setTypeconfirmStatus("ยกเลิก");
+            }}
+          >
+            ยกเลิกนัด
+          </Button>
+        </div>
       ),
     },
   ];
+
+  // ฟังก์ชันกรองข้อมูลการนัดหมายตามคำค้นหาทั้งสองช่อง
+  const filteredAppointments = (
+    AppointmentsType === "ดูการนัดทั้งหมด"
+      ? appointments
+      : AppointmentsType === "มาตามนัด"
+      ? appointmentTrue
+      : AppointmentsType === "กำลังมา"
+      ? appointmentfalse
+      : AppointmentsType === "ยกเลิกการนัด"
+      ? appointmentCanel
+      : []
+  ).filter((appointment) => {
+    const petName = appointment?.pet?.[0]?.name?.toLowerCase() || "";
+    const ownerName = appointment?.owner?.[0]?.name?.toLowerCase() || "";
+
+    return (
+      petName.includes(searchTermPet.toLowerCase()) &&
+      ownerName.includes(searchTermOwner.toLowerCase())
+    );
+  });
+
+  const confirmAddponitment = async (appointmentID) => {
+    if (TypeconfirmStatus === "ยืนยัน") {
+      await setconfirmStatus(true);
+    } else {
+      await setconfirmStatus(false);
+    }
+    try {
+      const sentdata = await confirmAppointment(appointmentID, confirmStatus);
+      message.success(sentdata.message);
+    } catch (err) {
+      console.error("Error confirming appointment:", err);
+      message.error("Failed to confirm the appointment");
+    }
+  };
 
   return (
     <>
@@ -96,11 +153,7 @@ export default function AdminDashboard() {
           onClick={() => setAppointmentsType("ดูการนัดทั้งหมด")}
           className="cursor-pointer"
         >
-          <Statistic
-            title="การนัดหมายทั้งหมด"
-            className="cursor-pointer"
-            value={appointments.length}
-          />
+          <Statistic title="การนัดหมายทั้งหมด" value={appointments.length} />
         </Card>
         <Card
           onClick={() => setAppointmentsType("กำลังมา")}
@@ -120,8 +173,14 @@ export default function AdminDashboard() {
             value={appointmentTrue.length}
           />
         </Card>
-        <Card>
-          <Statistic title="การนัดหมายที่ถูกยกเลิก" value={0} />
+        <Card
+          onClick={() => setAppointmentsType("ยกเลิกการนัด")}
+          className="cursor-pointer"
+        >
+          <Statistic
+            title="การนัดหมายที่ถูกยกเลิก"
+            value={appointmentCanel.length}
+          />
         </Card>
       </div>
 
@@ -129,35 +188,27 @@ export default function AdminDashboard() {
       <div className="p-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">การนัดหมายล่าสุด</h2>
-
-          {/* ปุ่มสำหรับเพิ่มการนัดหมาย */}
-          <Link to="/pageAdmin/Appointment">
-            <Button type="primary" shape="round" size="large">
-              + เพิ่มการนัดหมาย
-            </Button>
-          </Link>
         </div>
 
-        {/* ช่องค้นหา */}
-        <Input
-          placeholder="ค้นหาชื่อสัตว์เลี้ยงหรือเจ้าของ"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="mb-4"
-        />
+        {/* ช่องเลือกตัวเลือกการค้นหาและค้นหาข้อมูล */}
+        <div className="flex gap-4 mb-4">
+          <Input
+            placeholder="ค้นหาด้วยชื่อสัตว์เลี้ยง"
+            value={searchTermPet}
+            onChange={(e) => setSearchTermPet(e.target.value)}
+          />
+
+          <Input
+            placeholder="ค้นหาด้วยชื่อเจ้าของ"
+            value={searchTermOwner}
+            onChange={(e) => setSearchTermOwner(e.target.value)}
+          />
+        </div>
 
         {/* ตารางการนัดหมาย */}
         <Table
           columns={columns}
-          dataSource={
-            AppointmentsType === "ดูการนัดทั้งหมด"
-              ? appointments
-              : AppointmentsType === "มาตามนัด"
-              ? appointmentTrue
-              : AppointmentsType === "กำลังมา"
-              ? appointmentfalse
-              : ""
-          }
+          dataSource={filteredAppointments}
           rowKey="id"
           pagination={{ pageSize: 10 }}
         />

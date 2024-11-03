@@ -4,7 +4,6 @@ import { Select } from "antd";
 import {
   fecthOwners,
   fetchedPets,
-  AddOwnerToFirebase,
   AddOwner,
   updateOwnerInFirebase,
   deleteOwnerInFirebase,

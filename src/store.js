@@ -55,6 +55,14 @@ const useStore = create((set) => ({
 
   pets: [],
   setPets: (pets) => set({ pets }),
+
+  // ฟังก์ชันสำหรับออกจากระบบ
+  logout: () => {
+    localStorage.removeItem("Id");
+    localStorage.removeItem("token");
+    set({ token: "" }); // เคลียร์ token ใน zustand ด้วย
+    console.log("Logged out successfully");
+  },
 }));
 
 export default useStore;

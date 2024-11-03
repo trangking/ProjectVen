@@ -11,16 +11,18 @@ import {
   message,
   TimePicker,
 } from "antd";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   addNEwTreatment,
   fetchedPets,
   fetchedVaccine,
-  fetchedAddPointMent,
   upDateAppointment,
+  fetchedDoctorsByID,
+  fetchedAddPointMentBydoctorID,
 } from "../../firebase/firebase";
 import moment from "moment";
 import dayjs from "dayjs";
+import useStore from "../../store";
 
 const { TabPane } = Tabs;
 const { Option } = Select;
@@ -29,6 +31,7 @@ const Doctorpage = () => {
   const [openHistory, setOpenHistory] = useState(false);
   const [vaccineId, setVaccineId] = useState("");
   const [appointments, setAppointments] = useState([]);
+  const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [pets, setPets] = useState([]);
   const [vaccine, setVaccine] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -41,17 +44,45 @@ const Doctorpage = () => {
   const format = "HH:mm";
   const [selectedTime, setSelectedTime] = useState(dayjs());
   const [ownerId, setOwnerId] = useState("");
+  const token = localStorage.getItem("token");
+  const navigate = useNavigate();
+  const getID = localStorage.getItem("Id");
+  const [doctor, setDoctor] = useState([]);
+  const logout = useStore((state) => state.logout);
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/"); // Redirect if no token
+    }
+    const timer = setTimeout(() => {
+      localStorage.removeItem("token");
+      alert("Session expired. Please log in again.");
+      navigate("/");
+    }, 3600000);
+
+    return () => clearTimeout(timer);
+  }, [token, navigate]);
+
   useEffect(() => {
     const loadData = async () => {
       const fetchedPet = await fetchedPets();
       setPets(fetchedPet);
       const fetchVaccine = await fetchedVaccine();
       setVaccine(fetchVaccine);
-      const fetchappointment = await fetchedAddPointMent();
+      const fetchappointment = await fetchedAddPointMentBydoctorID(getID);
       setAppointments(fetchappointment);
+      setFilteredAppointments(fetchappointment);
     };
     loadData();
   }, []);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const fetchedDoctorByID = await fetchedDoctorsByID(getID);
+      setDoctor(fetchedDoctorByID);
+    };
+    if (getID) loadData();
+  }, [getID]);
 
   const showModal = (record) => {
     setTypeStatus("01");
@@ -59,6 +90,7 @@ const Doctorpage = () => {
     setIsModalVisible(true);
     setOwnerId(record.ownerId);
   };
+
   const showModaladdtreatment = (record) => {
     if (record.pet && record.pet.length > 0) {
       setSelectedPet(record.pet[0]);
@@ -68,12 +100,13 @@ const Doctorpage = () => {
     if (record.pet && record.owner.length > 0) {
       setOwnerId(record.owner[0].id);
     } else {
-      console.log("No pet data found");
+      console.log("No owner data found");
     }
     setapId(record.id);
     setTypeStatus("02");
     setIsModalVisible(true);
   };
+
   const showModalHistory = async (record) => {
     setSelectedPet(record);
     setOpenHistory(true);
@@ -82,7 +115,7 @@ const Doctorpage = () => {
   const handleAddTreatment = async () => {
     if (!selectedPet.id || !vaccineId) {
       message.error(
-        "กรุณากรอกข้อมูลทั้งหมด: สัตว์เลี้ยง, วัคซีน และรายละเอียดการรักษา"
+        "Please fill out all fields: pet, vaccine, and treatment details."
       );
       return;
     }
@@ -95,10 +128,11 @@ const Doctorpage = () => {
       treatmentsdec,
       nextAppointmentDate,
       selectedTime,
-      ownerId
+      ownerId,
+      doctor.id
     );
     setIsModalVisible(false);
-    message.success("เพิ่มการรักษาเรียบร้อยแล้ว");
+    message.success("Treatment added successfully.");
     setSelectedPet({});
     setVaccineId("");
     setTreatmentsdec("");
@@ -118,84 +152,125 @@ const Doctorpage = () => {
     setSelectedTime(null);
     form.resetFields();
   };
+
   const handleTimeChange = (time) => {
-    setSelectedTime(time); // อัปเดตเวลาที่เลือก
-    console.log(time.format("HH:mm")); // ใช้ method ของ dayjs เพื่อ format เวลา
+    setSelectedTime(time);
+    console.log(time.format("HH:mm"));
+  };
+
+  const handleDateSearch = (date) => {
+    if (!date) {
+      setFilteredAppointments(appointments);
+      return;
+    }
+
+    const formattedDate = date.format("YYYY-MM-DD");
+    console.log("Formatted search date:", formattedDate);
+
+    const filtered = appointments.filter((appointment) => {
+      console.log("Checking appointment:", appointment); // Log each appointment for inspection
+
+      // Check if nextAppointmentDate exists
+      if (appointment.nextAppointmentDate) {
+        const appointmentDate = appointment.nextAppointmentDate;
+        console.log("Appointment date:", appointmentDate);
+
+        // Compare dates
+        return appointmentDate === formattedDate;
+      } else {
+        console.log("nextAppointmentDate is missing for this appointment.");
+        return false;
+      }
+    });
+
+    setFilteredAppointments(filtered);
+    console.log("Filtered appointments:", filtered); // Show the final filtered results
   };
 
   return (
     <div className="manage-doctor">
       <div className="header bg-yellow-500 text-white p-4 text-center mb-4">
-        <h1 className="text-3xl font-bold">จัดการข้อมูลการนัดหมอ: [ชื่อหมอ]</h1>
+        <h1 className="text-3xl font-bold">
+          Doctor's Appointments: {doctor.DoctorName}
+        </h1>
       </div>
 
       <div className="p-8">
         <Tabs defaultActiveKey="1">
-          <TabPane tab="ตารางวันนัด" key="1">
-            <h2 className="text-2xl font-bold mb-4">ตารางวันนัดของหมอ</h2>
+          <TabPane tab="Appointments" key="1">
+            <h2 className="text-2xl font-bold mb-4">
+              Doctor's Appointment Schedule
+            </h2>
 
             <Form layout="inline">
-              <Form.Item
-                name="date"
-                label="วันที่"
-                rules={[{ required: true }]}
-              >
-                <DatePicker />
+              <Form.Item name="date" label="Select Date">
+                <DatePicker onChange={handleDateSearch} />
               </Form.Item>
-              <Form.Item name="description" label="รายละเอียด">
-                <Input placeholder="รายละเอียดการนัด" />
-              </Form.Item>
+
               <Form.Item>
-                <Link to={"/pageAdmin/Appointment"}>
-                  <Button type="primary">เพิ่มการนัดหมาย</Button>
+                <Link to={"/pageAdmin/Appointment"} target="blank">
+                  <Button type="primary">Add Appointment</Button>
+                </Link>
+                <Link to={"/"} className=" ml-4">
+                  <Button type="primary" onClick={logout}>
+                    Logout
+                  </Button>
                 </Link>
               </Form.Item>
             </Form>
 
             <Table
-              dataSource={appointments}
+              dataSource={filteredAppointments}
               columns={[
                 {
-                  title: "วันที่นัด",
+                  title: "Appointment Date",
                   dataIndex: "nextAppointmentDate",
                   key: "nextAppointmentDate",
                 },
                 {
-                  title: "เวลา",
+                  title: "Time",
                   dataIndex: "TimeAppoinMentDate",
                   key: "time",
                 },
                 {
-                  title: "ชื่อสัตว์เลี้ยง",
+                  title: "Pet Name",
                   dataIndex: ["pet", "0", "name"],
                   key: "petName",
                 },
                 {
-                  title: "รายละเอียด",
+                  title: "Details",
                   dataIndex: ["Latesttreatment", "description"],
                   key: "description",
                 },
                 {
-                  title: "สถานะการรักษา",
-                  dataIndex: "status",
-                  key: "สถานะการรักษา",
-                  render: (status) =>
-                    status === false ? "รอดำเนินการ" : "มาตามนัด",
+                  title: "Appointment Status",
+                  dataIndex: "confirmStats",
+                  key: "confirmStats",
+                  render: (confirmStats) =>
+                    confirmStats === null
+                      ? "Pending"
+                      : confirmStats
+                      ? "Confirmed"
+                      : "Cancelled",
                 },
                 {
-                  title: "เพิ่มการรักษา",
+                  title: "Treatment Status",
+                  dataIndex: "status",
+                  key: "treatmentStatus",
+                  render: (status) => (status ? "Completed" : "Pending"),
+                },
+                {
+                  title: "Add Treatment",
                   render: (text, record) => (
                     <Button
-                      disabled={record.status === false ? false : true}
-                      key={
-                        record.id || record.petId || record.nextAppointmentDate
-                      }
+                      disabled={record.status}
+                      key={record.id}
                       onClick={() => showModaladdtreatment(record)}
                     >
-                      เปิด
+                      Open
                     </Button>
                   ),
-                  key: "treatment",
+                  key: "addTreatment",
                 },
               ]}
               rowKey={(record) => record.id || record.petId}
@@ -203,31 +278,31 @@ const Doctorpage = () => {
             />
           </TabPane>
 
-          <TabPane tab="สัตว์เลี้ยง" key="2">
-            <h2 className="text-2xl font-bold mb-4">ข้อมูลสัตว์เลี้ยง</h2>
+          <TabPane tab="Pets" key="2">
+            <h2 className="text-2xl font-bold mb-4">Pet Information</h2>
 
             <Table
               dataSource={pets}
               columns={[
-                { title: "ชื่อสัตว์", dataIndex: "name", key: "name" },
-                { title: "ประเภท", dataIndex: "type", key: "type" },
-                { title: "อายุ (ปี)", dataIndex: "years", key: "years" },
-                { title: "อายุ (เดือน)", dataIndex: "months", key: "months" },
+                { title: "Pet Name", dataIndex: "name", key: "name" },
+                { title: "Type", dataIndex: "type", key: "type" },
+                { title: "Age (Years)", dataIndex: "years", key: "years" },
+                { title: "Age (Months)", dataIndex: "months", key: "months" },
                 {
-                  title: "ดูประวัติการรักษา",
+                  title: "View History",
                   key: "GetTreatment",
                   render: (text, record) => (
                     <Button onClick={() => showModalHistory(record)}>
-                      เปิด
+                      Open
                     </Button>
                   ),
                 },
                 {
-                  title: "เพิ่มการรักษา",
+                  title: "Add Treatment",
                   key: "addTreatment",
                   render: (text, record) => (
                     <Button type="primary" onClick={() => showModal(record)}>
-                      เพิ่ม
+                      Add
                     </Button>
                   ),
                 },
@@ -239,7 +314,7 @@ const Doctorpage = () => {
         </Tabs>
 
         <Modal
-          title={`เพิ่มการรักษาสำหรับ ${selectedPet?.name}`}
+          title={`Add Treatment for ${selectedPet?.name}`}
           visible={isModalVisible}
           onOk={handleAddTreatment}
           onCancel={handleCancel}
@@ -247,40 +322,31 @@ const Doctorpage = () => {
           <Form form={form} layout="vertical">
             <Form.Item
               name="vaccine"
-              label="วัคซีนที่ใส่"
-              rules={[{ required: true, message: "กรุณาเลือกวัคซีน" }]}
+              label="Vaccine"
+              rules={[{ required: true, message: "Please select a vaccine" }]}
             >
               <Select
-                placeholder="เลือกวัคซีน"
+                placeholder="Select Vaccine"
                 onChange={setVaccineId}
                 value={vaccineId}
               >
-                {vaccine.length === 0 ? (
-                  <Option disabled>No vaccines available</Option>
-                ) : (
-                  vaccine.map((item) => (
-                    <Option key={item.id} value={item.id}>
-                      {item.vaccineName}
-                    </Option>
-                  ))
-                )}
+                {vaccine.map((item) => (
+                  <Option key={item.id} value={item.id}>
+                    {item.vaccineName}
+                  </Option>
+                ))}
               </Select>
             </Form.Item>
 
-            <Form.Item name="notes" label="หมายเหตุ">
+            <Form.Item name="notes" label="Notes">
               <Input.TextArea
                 onChange={(event) => setTreatmentsdec(event.target.value)}
-                placeholder="รายละเอียดเพิ่มเติม"
+                placeholder="Additional details"
                 value={treatmentsdec}
               />
             </Form.Item>
 
-            <Form.Item
-              label="วันนัดครั้งถัดไป (ถ้าไม่กรอกอะไรลงไป ระบบจะบอกว่าไม่มีนัด)"
-              rules={[
-                { required: true, message: "กรุณาเลือกวันนัดครั้งถัดไป" },
-              ]}
-            >
+            <Form.Item label="Next Appointment Date">
               <DatePicker
                 defaultValue={
                   nextAppointmentDate ? moment(nextAppointmentDate) : null
@@ -289,14 +355,12 @@ const Doctorpage = () => {
                   setNextAppointmentDate(dateString)
                 }
                 style={{ width: "100%" }}
-                placeholder="เลือกวันนัดครั้งถัดไป"
+                placeholder="Select next appointment date"
               />
             </Form.Item>
             <Form.Item>
               <div className="flex flex-col">
-                <label>
-                  เวลาการนัด(ถ้าไม่กรอกอะไรลงไป ระบบจะบอกว่าไม่มีนัด)
-                </label>
+                <label>Next Appointment Time</label>
                 <TimePicker
                   className="mt-2"
                   format={format}
@@ -308,7 +372,7 @@ const Doctorpage = () => {
         </Modal>
 
         <Modal
-          title={`ประวัติการรักษา : ${selectedPet?.name}`}
+          title={`Treatment History: ${selectedPet?.name}`}
           visible={openHistory}
           onCancel={handleCancel}
           footer={null}
@@ -366,7 +430,7 @@ const Doctorpage = () => {
                 ) : (
                   <tr>
                     <td colSpan="5" className="text-center">
-                      ไม่มีข้อมูลการรักษา
+                      No treatment history available
                     </td>
                   </tr>
                 )}
