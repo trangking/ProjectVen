@@ -6,39 +6,64 @@ import {
   confirmAppointment,
   GetAddPointMentByCannel,
 } from "../../../firebase/firebase";
-import { Table, Button, Input, Card, Statistic, message, Select } from "antd";
+import {
+  Table,
+  Button,
+  Input,
+  Card,
+  Statistic,
+  message,
+  Select,
+  Spin,
+} from "antd";
 
 const { Option } = Select;
 
 export default function AdminDashboard() {
-  const [searchTermPet, setSearchTermPet] = useState(""); // คำค้นหาสำหรับชื่อสัตว์เลี้ยง
-  const [searchTermOwner, setSearchTermOwner] = useState(""); // คำค้นหาสำหรับชื่อเจ้าของ
+  const [searchTermPet, setSearchTermPet] = useState("");
+  const [searchTermOwner, setSearchTermOwner] = useState("");
   const [appointments, setAppointments] = useState([]);
   const [appointmentTrue, setappointmentTrue] = useState([]);
   const [appointmentfalse, setappointmentfalse] = useState([]);
   const [appointmentCanel, setappointmentCanel] = useState([]);
   const [AppointmentsType, setAppointmentsType] = useState("ดูการนัดทั้งหมด");
   const [confirmStatus, setconfirmStatus] = useState(false);
-  const [TypeconfirmStatus, setTypeconfirmStatus] = useState(true);
+  const [TypeconfirmStatus, setTypeconfirmStatus] = useState("");
+  const [loading, setLoading] = useState(false); // เพิ่ม state loading สำหรับการโหลดข้อมูล
 
   useEffect(() => {
     const fetchAppointment = async () => {
+      setLoading(true); // เริ่มแสดง loading
       try {
         const fetchedAppointments = await fetchedAddPointMent();
-        await setAppointments(fetchedAppointments);
+        setAppointments(fetchedAppointments);
         const showTableTrue = await GetAddPointMentBytrue();
-        await setappointmentTrue(showTableTrue);
+        setappointmentTrue(showTableTrue);
         const showTablefalse = await GetAddPointMentByfalse();
-        await setappointmentfalse(showTablefalse);
+        setappointmentfalse(showTablefalse);
         const showTablecannel = await GetAddPointMentByCannel();
-        await setappointmentCanel(showTablecannel);
+        setappointmentCanel(showTablecannel);
       } catch (error) {
         console.error("Error fetching appointments:", error);
       }
+      setLoading(false); // หยุดแสดง loading เมื่อโหลดเสร็จ
     };
 
     fetchAppointment();
   }, []);
+
+  const confirmAddponitment = async (appointmentID, isConfirmed) => {
+    setLoading(true); // เริ่มแสดง loading
+    try {
+      const sentdata = await confirmAppointment(appointmentID, isConfirmed);
+      message.success(sentdata.message);
+      await fetchedAddPointMent(); // โหลดข้อมูลใหม่หลังจากยืนยันการนัดหมาย
+    } catch (err) {
+      console.error("Error confirming appointment:", err);
+      message.error("Failed to confirm the appointment");
+    }
+    setLoading(false); // หยุดแสดง loading เมื่ออัปเดตเสร็จ
+  };
 
   const columns = [
     {
@@ -50,6 +75,11 @@ export default function AdminDashboard() {
       title: "เจ้าของ",
       dataIndex: ["owner", "0", "name"],
       key: "owner",
+    },
+    {
+      title: "คุณหมอ",
+      dataIndex: "doctorName",
+      key: "doctorName",
     },
     {
       title: "วันที่",
@@ -76,35 +106,33 @@ export default function AdminDashboard() {
       title: "การจัดการ",
       key: "actions",
       render: (appointment) => (
-        <div
-          style={{
-            pointerEvents: appointment.status ? "none" : "auto",
-            opacity: appointment.status ? 0.5 : 1,
-          }}
-        >
-          <Button
-            color="primary"
-            variant="outlined"
-            onClick={() => {
-              confirmAddponitment(appointment.id);
-              setTypeconfirmStatus("ยืนยัน");
+        <Spin spinning={loading}>
+          <div
+            style={{
+              pointerEvents: appointment.status ? "none" : "auto",
+              opacity: appointment.status ? 0.5 : 1,
             }}
-            style={{ marginRight: "8px" }}
           >
-            ยันนัดหมาย
-          </Button>
+            <Button
+              color="primary"
+              variant="outlined"
+              onClick={() => confirmAddponitment(appointment.id, true)} // ส่งค่า true สำหรับการยืนยัน
+              style={{ marginRight: "8px" }}
+              disabled={loading} // ปิดการใช้งานปุ่มระหว่างโหลด
+            >
+              ยันนัดหมาย
+            </Button>
 
-          <Button
-            color="danger"
-            variant="outlined"
-            onClick={() => {
-              confirmAddponitment(appointment.id);
-              setTypeconfirmStatus("ยกเลิก");
-            }}
-          >
-            ยกเลิกนัด
-          </Button>
-        </div>
+            <Button
+              color="danger"
+              variant="outlined"
+              onClick={() => confirmAddponitment(appointment.id, false)} // ส่งค่า false สำหรับการยกเลิก
+              disabled={loading} // ปิดการใช้งานปุ่มระหว่างโหลด
+            >
+              ยกเลิกนัด
+            </Button>
+          </div>
+        </Spin>
       ),
     },
   ];
@@ -130,24 +158,8 @@ export default function AdminDashboard() {
     );
   });
 
-  const confirmAddponitment = async (appointmentID) => {
-    if (TypeconfirmStatus === "ยืนยัน") {
-      await setconfirmStatus(true);
-    } else {
-      await setconfirmStatus(false);
-    }
-    try {
-      const sentdata = await confirmAppointment(appointmentID, confirmStatus);
-      message.success(sentdata.message);
-    } catch (err) {
-      console.error("Error confirming appointment:", err);
-      message.error("Failed to confirm the appointment");
-    }
-  };
-
   return (
     <>
-      {/* Section 1: ข้อมูลสถิติ */}
       <div className="p-4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card
           onClick={() => setAppointmentsType("ดูการนัดทั้งหมด")}
@@ -184,13 +196,11 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Section 2: ตารางการนัดหมายล่าสุด */}
       <div className="p-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">การนัดหมายล่าสุด</h2>
         </div>
 
-        {/* ช่องเลือกตัวเลือกการค้นหาและค้นหาข้อมูล */}
         <div className="flex gap-4 mb-4">
           <Input
             placeholder="ค้นหาด้วยชื่อสัตว์เลี้ยง"
@@ -205,12 +215,12 @@ export default function AdminDashboard() {
           />
         </div>
 
-        {/* ตารางการนัดหมาย */}
         <Table
           columns={columns}
           dataSource={filteredAppointments}
           rowKey="id"
           pagination={{ pageSize: 10 }}
+          loading={loading} // แสดงสถานะโหลดในตารางเมื่อโหลดข้อมูล
         />
       </div>
     </>

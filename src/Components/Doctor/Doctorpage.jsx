@@ -10,6 +10,7 @@ import {
   Input,
   message,
   TimePicker,
+  Spin,
 } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -23,6 +24,7 @@ import {
 import moment from "moment";
 import dayjs from "dayjs";
 import useStore from "../../store";
+import { render } from "@testing-library/react";
 
 const { TabPane } = Tabs;
 const { Option } = Select;
@@ -48,7 +50,11 @@ const Doctorpage = () => {
   const navigate = useNavigate();
   const getID = localStorage.getItem("Id");
   const [doctor, setDoctor] = useState([]);
+  const [vaccine_dose, setvaccine_dose] = useState("");
   const logout = useStore((state) => state.logout);
+  const [searchText, setSearchText] = useState("");
+  const [filteredPets, setFilteredPets] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -65,23 +71,28 @@ const Doctorpage = () => {
 
   useEffect(() => {
     const loadData = async () => {
+      setLoading(true); // เริ่มโหลดข้อมูล
       const fetchedPet = await fetchedPets();
       setPets(fetchedPet);
+      setFilteredPets(fetchedPet);
       const fetchVaccine = await fetchedVaccine();
       setVaccine(fetchVaccine);
       const fetchappointment = await fetchedAddPointMentBydoctorID(getID);
       setAppointments(fetchappointment);
       setFilteredAppointments(fetchappointment);
+      setLoading(false); // หยุดการแสดงโหลดเมื่อข้อมูลถูกโหลดเสร็จ
     };
     loadData();
-  }, []);
+  }, [getID]);
 
   useEffect(() => {
-    const loadData = async () => {
-      const fetchedDoctorByID = await fetchedDoctorsByID(getID);
-      setDoctor(fetchedDoctorByID);
+    const loadDoctorData = async () => {
+      if (getID) {
+        const fetchedDoctorByID = await fetchedDoctorsByID(getID);
+        setDoctor(fetchedDoctorByID);
+      }
     };
-    if (getID) loadData();
+    loadDoctorData();
   }, [getID]);
 
   const showModal = (record) => {
@@ -113,32 +124,40 @@ const Doctorpage = () => {
   };
 
   const handleAddTreatment = async () => {
-    if (!selectedPet.id || !vaccineId) {
-      message.error(
-        "กรุณากรอกข้อมูลทั้งหมด: สัตว์เลี้ยง, วัคซีน และรายละเอียดการรักษา"
+    setLoading(true); // เริ่มแสดง loading spinner
+    try {
+      if (!selectedPet.id || !vaccineId || !vaccine_dose) {
+        message.error(
+          "กรุณากรอกข้อมูลทั้งหมด: สัตว์เลี้ยง, วัคซีน และรายละเอียดการรักษา"
+        );
+        setLoading(false); // ปิด loading ถ้าข้อมูลไม่ครบ
+        return;
+      }
+      if (typeStatus === "02") {
+        await upDateAppointment(apID);
+      }
+      await addNEwTreatment(
+        selectedPet.id,
+        vaccineId,
+        treatmentsdec,
+        nextAppointmentDate,
+        selectedTime,
+        ownerId,
+        doctor.id,
+        vaccine_dose
       );
-      return;
+      message.success("เพิ่มการรักษาเรียบร้อยแล้ว");
+      setIsModalVisible(false);
+      setSelectedPet({});
+      setVaccineId("");
+      setTreatmentsdec("");
+      setNextAppointmentDate(null);
+      setSelectedTime(null);
+      form.resetFields();
+    } catch (error) {
+      message.error("เกิดข้อผิดพลาดในการเพิ่มการรักษา");
     }
-    if (typeStatus === "02") {
-      await upDateAppointment(apID);
-    }
-    await addNEwTreatment(
-      selectedPet.id,
-      vaccineId,
-      treatmentsdec,
-      nextAppointmentDate,
-      selectedTime,
-      ownerId,
-      doctor.id
-    );
-    setIsModalVisible(false);
-    message.success("เพิ่มการรักษาเรียบร้อยแล้ว");
-    setSelectedPet({});
-    setVaccineId("");
-    setTreatmentsdec("");
-    setNextAppointmentDate(null);
-    setSelectedTime(null);
-    form.resetFields();
+    setLoading(false); // หยุดแสดง loading spinner เมื่อเสร็จสิ้น
     handleCancel();
   };
 
@@ -154,8 +173,12 @@ const Doctorpage = () => {
   };
 
   const handleTimeChange = (time) => {
-    setSelectedTime(time);
-    console.log(time.format("HH:mm"));
+    if (time) {
+      setSelectedTime(time);
+      console.log(time.format("HH:mm"));
+    } else {
+      setSelectedTime(null);
+    }
   };
 
   const handleDateSearch = (date) => {
@@ -185,6 +208,19 @@ const Doctorpage = () => {
     console.log("ผลการค้นหา:", filtered);
   };
 
+  const handleSearch = (event) => {
+    const searchValue = event.target.value.toLowerCase();
+    setSearchText(searchValue);
+    if (searchValue) {
+      const filteredData = pets.filter((pet) =>
+        pet.name.toLowerCase().includes(searchValue)
+      );
+      setFilteredPets(filteredData);
+    } else {
+      setFilteredPets(pets); // ถ้าช่องค้นหาว่าง แสดงข้อมูลทั้งหมด
+    }
+  };
+
   return (
     <div className="manage-doctor">
       <div className="header bg-yellow-500 text-white p-4 text-center mb-4">
@@ -208,82 +244,124 @@ const Doctorpage = () => {
                   <Button type="primary">เพิ่มการนัดหมาย</Button>
                 </Link>
                 <Link to={"/"} className=" ml-4">
-                  <Button type="primary" onClick={logout}>
+                  <Button className=" bg-[#f50] text-white" onClick={logout}>
                     ออกจากระบบ
                   </Button>
                 </Link>
               </Form.Item>
             </Form>
-
-            <Table
-              dataSource={filteredAppointments}
-              columns={[
-                {
-                  title: "วันที่นัด",
-                  dataIndex: "nextAppointmentDate",
-                  key: "nextAppointmentDate",
-                },
-                {
-                  title: "เวลา",
-                  dataIndex: "TimeAppoinMentDate",
-                  key: "time",
-                },
-                {
-                  title: "ชื่อสัตว์เลี้ยง",
-                  dataIndex: ["pet", "0", "name"],
-                  key: "petName",
-                },
-                {
-                  title: "รายละเอียด",
-                  dataIndex: ["Latesttreatment", "description"],
-                  key: "description",
-                },
-                {
-                  title: "สถานะการนัดหมาย",
-                  dataIndex: "confirmStats",
-                  key: "confirmStats",
-                  render: (confirmStats) =>
-                    confirmStats === null
-                      ? "รอยืนยันการนัด"
-                      : confirmStats
-                      ? "ยืนยันแล้ว"
-                      : "ยกเลิก",
-                },
-                {
-                  title: "สถานะการรักษา",
-                  dataIndex: "status",
-                  key: "treatmentStatus",
-                  render: (status) => (status ? "เสร็จสิ้น" : "รอดำเนินการ"),
-                },
-                {
-                  title: "เพิ่มการรักษา",
-                  render: (text, record) => (
-                    <Button
-                      disabled={record.status}
-                      key={record.id}
-                      onClick={() => showModaladdtreatment(record)}
-                    >
-                      เปิด
-                    </Button>
-                  ),
-                  key: "addTreatment",
-                },
-              ]}
-              rowKey={(record) => record.id || record.petId}
-              className="mt-4"
-            />
+            <Spin spinning={loading}>
+              <Table
+                dataSource={filteredAppointments}
+                columns={[
+                  {
+                    title: "วันที่นัด",
+                    dataIndex: "nextAppointmentDate",
+                    key: "nextAppointmentDate",
+                  },
+                  {
+                    title: "เวลา",
+                    dataIndex: "TimeAppoinMentDate",
+                    key: "time",
+                  },
+                  {
+                    title: "ชื่อสัตว์เลี้ยง",
+                    dataIndex: ["pet", "0", "name"],
+                    key: "petName",
+                  },
+                  {
+                    title: "ประเภทสัตว์เลี้ยง",
+                    dataIndex: ["pet", "0", "type"],
+                    key: "petType",
+                  },
+                  {
+                    title: "สายพันธุ์สัตว์",
+                    dataIndex: ["pet", "0", "subType"],
+                    key: "petsubType",
+                  },
+                  {
+                    title: "นํ้าหนักสัตว์เลี้ยง",
+                    dataIndex: ["pet", "0", "weight"],
+                    key: "petweight",
+                  },
+                  {
+                    title: "ชื่อเจ้าของ",
+                    dataIndex: ["owner", "0", "name"],
+                    key: "ownerName",
+                  },
+                  {
+                    title: "รายละเอียด",
+                    dataIndex: ["Latesttreatment", "description"],
+                    key: "description",
+                  },
+                  {
+                    title: "สถานะการนัดหมาย",
+                    dataIndex: "confirmStats",
+                    key: "confirmStats",
+                    render: (confirmStats) =>
+                      confirmStats === null
+                        ? "รอยืนยันการนัด"
+                        : confirmStats
+                        ? "ยืนยันแล้ว"
+                        : "ยกเลิก",
+                  },
+                  {
+                    title: "สถานะการรักษา",
+                    dataIndex: "status",
+                    key: "treatmentStatus",
+                    render: (status) => (status ? "เสร็จสิ้น" : "รอดำเนินการ"),
+                  },
+                  {
+                    title: "เพิ่มการรักษา",
+                    render: (text, record) => (
+                      <div
+                        style={{
+                          pointerEvents: !record.confirmStats ? "none" : "auto",
+                          opacity: !record.confirmStats ? 0.5 : 1,
+                        }}
+                      >
+                        <Button
+                          disabled={record.status}
+                          key={record.id}
+                          onClick={() => showModaladdtreatment(record)}
+                        >
+                          เปิด
+                        </Button>
+                      </div>
+                    ),
+                    key: "addTreatment",
+                  },
+                ]}
+                rowKey={(record) => record.id || record.petId}
+                className="mt-4"
+              />
+            </Spin>
           </TabPane>
 
           <TabPane tab="สัตว์เลี้ยง" key="2">
             <h2 className="text-2xl font-bold mb-4">ข้อมูลสัตว์เลี้ยง</h2>
 
+            {/* ช่องค้นหาชื่อสัตว์ */}
+            <Input
+              placeholder="ค้นหาชื่อสัตว์"
+              value={searchText}
+              onChange={handleSearch}
+              className="mb-4"
+              style={{
+                width: "10%",
+              }}
+            />
+
             <Table
-              dataSource={pets}
+              dataSource={filteredPets}
               columns={[
                 { title: "ชื่อสัตว์", dataIndex: "name", key: "name" },
                 { title: "ประเภท", dataIndex: "type", key: "type" },
+                { title: "สายพันธุ์", dataIndex: "subType", key: "subType" },
+                { title: "เจ้าของ", dataIndex: "ownerName", key: "ownerName" },
                 { title: "อายุ (ปี)", dataIndex: "years", key: "years" },
                 { title: "อายุ (เดือน)", dataIndex: "months", key: "months" },
+                { title: "นํ้าหนัก", dataIndex: "weight", key: "weight" },
                 {
                   title: "ดูประวัติการรักษา",
                   key: "GetTreatment",
@@ -315,56 +393,71 @@ const Doctorpage = () => {
           onOk={handleAddTreatment}
           onCancel={handleCancel}
         >
-          <Form form={form} layout="vertical">
-            <Form.Item
-              name="vaccine"
-              label="วัคซีน"
-              rules={[{ required: true, message: "กรุณาเลือกวัคซีน" }]}
-            >
-              <Select
-                placeholder="เลือกวัคซีน"
-                onChange={setVaccineId}
-                value={vaccineId}
+          <Spin spinning={loading}>
+            <Form form={form} layout="vertical">
+              <Form.Item
+                name="vaccine"
+                label="วัคซีน"
+                rules={[{ required: true, message: "กรุณาเลือกวัคซีน" }]}
               >
-                {vaccine.map((item) => (
-                  <Option key={item.id} value={item.id}>
-                    {item.vaccineName}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
+                <Select
+                  placeholder="เลือกวัคซีน"
+                  onChange={setVaccineId}
+                  value={vaccineId}
+                >
+                  {vaccine.map((item) => (
+                    <Option key={item.id} value={item.id}>
+                      {item.vaccineName}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
 
-            <Form.Item name="notes" label="หมายเหตุ">
-              <Input.TextArea
-                onChange={(event) => setTreatmentsdec(event.target.value)}
-                placeholder="รายละเอียดเพิ่มเติม"
-                value={treatmentsdec}
-              />
-            </Form.Item>
-
-            <Form.Item label="วันนัดครั้งถัดไป">
-              <DatePicker
-                defaultValue={
-                  nextAppointmentDate ? moment(nextAppointmentDate) : null
-                }
-                onChange={(date, dateString) =>
-                  setNextAppointmentDate(dateString)
-                }
-                style={{ width: "100%" }}
-                placeholder="เลือกวันนัดครั้งถัดไป"
-              />
-            </Form.Item>
-            <Form.Item>
-              <div className="flex flex-col">
-                <label>เวลานัดครั้งถัดไป</label>
-                <TimePicker
-                  className="mt-2"
-                  format={format}
-                  onChange={handleTimeChange}
+              <Form.Item name="notes" label="หมายเหตุ">
+                <Input.TextArea
+                  onChange={(event) => setTreatmentsdec(event.target.value)}
+                  placeholder="รายละเอียดเพิ่มเติม"
+                  value={treatmentsdec}
                 />
-              </div>
-            </Form.Item>
-          </Form>
+              </Form.Item>
+
+              <Form.Item
+                name="vaccine_dose"
+                label="ปริมาณ(โดส)"
+                rules={[{ required: true, message: "กรุณากรอกปริมาณ" }]}
+              >
+                <Input
+                  onChange={(event) => setvaccine_dose(event.target.value)}
+                  placeholder="กรอกปริมาณ"
+                  value={vaccine_dose}
+                  addonAfter="โดส"
+                />
+              </Form.Item>
+
+              <Form.Item label="วันนัดครั้งถัดไป">
+                <DatePicker
+                  defaultValue={
+                    nextAppointmentDate ? moment(nextAppointmentDate) : null
+                  }
+                  onChange={(date, dateString) =>
+                    setNextAppointmentDate(dateString)
+                  }
+                  style={{ width: "100%" }}
+                  placeholder="เลือกวันนัดครั้งถัดไป"
+                />
+              </Form.Item>
+              <Form.Item>
+                <div className="flex flex-col">
+                  <label>เวลานัดครั้งถัดไป</label>
+                  <TimePicker
+                    className="mt-2"
+                    format={format}
+                    onChange={handleTimeChange}
+                  />
+                </div>
+              </Form.Item>
+            </Form>
+          </Spin>
         </Modal>
 
         <Modal
@@ -374,65 +467,75 @@ const Doctorpage = () => {
           footer={null}
           width={1000}
         >
-          <div className="bg-pink-100 rounded-lg p-6">
-            <table className="min-w-full table-auto border-collapse border border-pink-200">
-              <thead>
-                <tr className="bg-pink-200">
-                  <th className="px-4 py-2 border border-pink-300">
-                    การฉีดวัคซีน
-                  </th>
-                  <th className="px-4 py-2 border border-pink-300">
-                    หมายเลขชุด
-                  </th>
-                  <th className="px-4 py-2 border border-pink-300">
-                    วันที่ฉีดวัคซีน
-                  </th>
-                  <th className="px-4 py-2 border border-pink-300">
-                    นัดครั้งถัดไป
-                  </th>
-                  <th className="px-4 py-2 border border-pink-300">สติ๊กเกอร์</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Array.isArray(selectedPet.historytreatments) &&
-                selectedPet.historytreatments.length > 0 ? (
-                  selectedPet.historytreatments.map((item, index) => (
-                    <tr key={index}>
-                      <td className="px-4 py-2 border border-pink-300">
-                        {item.vaccine.vaccineName}
-                      </td>
-                      <td className="px-4 py-2 border border-pink-300">
-                        <img
-                          src={item.batchNo}
-                          alt={`Batch No. ${index + 1}`}
-                          className="w-12 h-12 object-contain"
-                        />
-                      </td>
-                      <td className="px-4 py-2 border border-pink-300">
-                        {item.DateVaccination}
-                      </td>
-                      <td className="px-4 py-2 border border-pink-300">
-                        {item.nextAppointmentDate}
-                      </td>
-                      <td className="px-4 py-2 border border-pink-300">
-                        <img
-                          src={item.vaccine.vaccineImage}
-                          alt={`Sticker for ${item.vaccine.vaccineImage}`}
-                          className="w-12 h-12 object-contain"
-                        />
+          <Spin spinning={loading}>
+            <div className="bg-pink-100 rounded-lg p-6">
+              <table className="min-w-full table-auto border-collapse border border-pink-200">
+                <thead>
+                  <tr className="bg-pink-200">
+                    <th className="px-4 py-2 border border-pink-300">
+                      การฉีดวัคซีน
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      หมายเลขชุด
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      วันที่ฉีดวัคซีน
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      ปริมาณการฉีดวัคซีน
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      นัดครั้งถัดไป
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      สติ๊กเกอร์
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.isArray(selectedPet.historytreatments) &&
+                  selectedPet.historytreatments.length > 0 ? (
+                    selectedPet.historytreatments.map((item, index) => (
+                      <tr key={index}>
+                        <td className="px-4 py-2 border border-pink-300">
+                          {item.vaccine.vaccineName}
+                        </td>
+                        <td className="px-4 py-2 border border-pink-300">
+                          <img
+                            src={item.batchNo}
+                            alt={`Batch No. ${index + 1}`}
+                            className="w-12 h-12 object-contain"
+                          />
+                        </td>
+                        <td className="px-4 py-2 border border-pink-300">
+                          {item.DateVaccination}
+                        </td>
+                        <td className="px-4 py-2 border border-pink-300">
+                          {item.vaccine_dose}
+                        </td>
+                        <td className="px-4 py-2 border border-pink-300">
+                          {item.nextAppointmentDate}
+                        </td>
+                        <td className="px-4 py-2 border border-pink-300 flex justify-center">
+                          <img
+                            src={item.vaccine.vaccineImage}
+                            alt={`Sticker for ${item.vaccine.vaccineImage}`}
+                            className="w-20 h-20 object-contain"
+                          />
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="text-center">
+                        ไม่มีข้อมูลการรักษา
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="5" className="text-center">
-                      ไม่มีข้อมูลการรักษา
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Spin>
         </Modal>
       </div>
     </div>

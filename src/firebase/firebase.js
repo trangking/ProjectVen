@@ -125,6 +125,7 @@ const AddOwner = async (
       const petDocRef = doc(db, "pets", petId);
       await updateDoc(petDocRef, {
         ownerId: userId,
+        ownerName: addMember
       });
     });
     await Promise.all(updatePetPromises);
@@ -186,7 +187,7 @@ const deleteOwnerInFirebase = async (ownerId) => {
 
     const batchPromises = snapshot.docs.map(async (petDoc) => {
       const petDocRef = doc(db, "pets", petDoc.id);
-      await updateDoc(petDocRef, { ownerId: null });
+      await updateDoc(petDocRef, { ownerId: null, ownerName: null });
     });
 
     await Promise.all(batchPromises);
@@ -458,7 +459,7 @@ const deleteVaccineInFirebase = async (vaccineId, imageUrl) => {
   }
 };
 
-const addNEwTreatment = async (petId, vaccineId, treatmentsdec, nextAppointmentDate, selectedTime, ownerId, doctorID) => {
+const addNEwTreatment = async (petId, vaccineId, treatmentsdec, nextAppointmentDate, selectedTime, ownerId, doctorID, vaccine_dose) => {
   try {
     const petDocRef = doc(db, "pets", petId); // เอกสารสัตว์เลี้ยง
     const vaccineDocRef = doc(db, "vaccine", vaccineId); // เอกสารวัคซีน
@@ -487,7 +488,8 @@ const addNEwTreatment = async (petId, vaccineId, treatmentsdec, nextAppointmentD
         description: treatmentsdec,
         nextAppointmentDate: nextAppointmentDate ? nextAppointmentDate : "ไม่มีการนัด",
         nextTimeAppoinMentDate: formattedTime ? formattedTime : "ไม่มีเวลาการนัด",
-        DateVaccination: formattedDate, // สร้างวันที่
+        DateVaccination: formattedDate,
+        vaccine_dose: vaccine_dose + " โดส", // สร้างวันที่
       };
 
       // อัปเดตเอกสารสัตว์เลี้ยงใน Firestore
@@ -551,6 +553,9 @@ const addAppointmentInDoctor = async (petId, doctorID, formattedTime, ownerId) =
     const pets = {
       id: GetDocpet.id,
       name: petData.name,
+      weight: petData.weight,
+      type: petData.type,
+      subType: petData.subType,
     }
     const owners = {
       id: GetDocOwner.id,
@@ -613,6 +618,9 @@ const addAppointmentInAdmin = async (AddAppointment) => {
     const pets = {
       id: GetDocpet.id,
       name: petData.name,
+      weight: petData.weight,
+      type: petData.type,
+      subType: petData.subType,
     }
     const owners = {
       id: GetDocOwner.id,
@@ -623,12 +631,12 @@ const addAppointmentInAdmin = async (AddAppointment) => {
     const AddAppointMent = {
       owner: arrayUnion(owners),
       pet: arrayUnion(pets),
-      Latesttreatment: latestTreatment, // ข้อมูลการรักษาล่าสุดของสัตว์เลี้ยง
       doctorID: GetDoctor.id, // ใช้ .id จาก GetDoctor สำหรับไอดีเอกสารแพทย์
       doctorName: doctorData.DoctorName || "Unknown Doctor", // ตรวจสอบว่ามีชื่อแพทย์ในข้อมูลหรือไม่
       nextAppointmentDate: AddAppointment.nextAppointmentDate,
       TimeAppoinMentDate: AddAppointment.selectedTime,
-      status: false, // สถานะการนัดหมาย
+      status: false,
+      confirmStats: null // สถานะการนัดหมาย
     };
 
     const docRef = await addDoc(collection(db, "appointment"), AddAppointMent);
@@ -762,8 +770,10 @@ const getOwnerByIdpet = async (ownerId) => {
 };
 
 const confirmAppointment = async (appointmentID, confirmStats) => {
+  console.log("confirm", confirmStats);
+
   try {
-    const appointmentRef = doc(db, "appointment", appointmentID);
+    const appointmentRef = await doc(db, "appointment", appointmentID);
 
     // Update the specified field in Firestore
     await updateDoc(appointmentRef, {

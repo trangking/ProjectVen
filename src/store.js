@@ -19,7 +19,7 @@ const useStore = create((set) => ({
   newPet: {
     name: "",
     type: "",
-    subTypeExsotic: "",
+    subType: "",
     years: "",
     months: "",
     weight: "",

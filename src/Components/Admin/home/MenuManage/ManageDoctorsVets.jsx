@@ -5,7 +5,7 @@ import {
   updateDoctorInFirebase,
   deleteDoctor,
 } from "../../../../firebase/firebase";
-import { Upload, Button, message, Select, Modal, Input } from "antd";
+import { Upload, Button, message, Select, Modal, Input, Spin } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 
 const { Option } = Select;
@@ -23,6 +23,7 @@ export default function ManageDoctorsVets() {
   const [editDoctorId, setEditDoctorId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [img, setImg] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const openModal = (doctor = null) => {
     if (doctor) {
@@ -73,36 +74,44 @@ export default function ManageDoctorsVets() {
       message.error("All fields are required");
       return;
     }
+    setLoading(true);
     try {
       if (editDoctorId) {
-        // Update doctor
         await updateDoctorInFirebase(editDoctorId, newDoctor, img);
         message.success("Doctor updated successfully");
       } else {
-        // Add new doctor
         await addNewDoctors(newDoctor, img);
         message.success("Doctor added successfully");
       }
       closeModal();
-      loadDoctors();
+      await loadDoctors(); // Ensure doctors are reloaded after saving
     } catch (error) {
       message.error("Error saving doctor");
     }
+    setLoading(false);
   };
 
   const handleDeleteDoctor = async (doctorId) => {
+    setLoading(true);
     try {
       await deleteDoctor(doctorId);
       message.success("Doctor deleted successfully");
-      loadDoctors();
+      await loadDoctors(); // Reload doctors after deletion
     } catch (error) {
       message.error("Error deleting doctor");
     }
+    setLoading(false);
   };
 
   const loadDoctors = async () => {
-    const fetchedDoctorList = await fetchedDoctors();
-    setDoctors(fetchedDoctorList);
+    setLoading(true);
+    try {
+      const fetchedDoctorList = await fetchedDoctors();
+      setDoctors(fetchedDoctorList);
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+    }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -132,58 +141,60 @@ export default function ManageDoctorsVets() {
       </div>
 
       <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg overflow-hidden">
-        <table className="w-full bg-white rounded-lg">
-          <thead className="bg-yellow-700 text-white">
-            <tr>
-              <th className="py-4 px-6 text-left">ชื่อหมอ</th>
-              <th className="py-4 px-6 text-left">สายการแพทย์</th>
-              <th className="py-4 px-6 text-left">อีเมลล์</th>
-              <th className="py-4 px-6 text-left">เบอร์โทรศัพท์</th>
-              <th className="py-4 px-6 text-left">ประกาศนียบัตรการแพทย์</th>
-              <th className="py-4 px-6 text-left">การจัดการ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {doctors.map((doctor) => (
-              <tr
-                key={doctor.id}
-                className="hover:bg-yellow-50 transition-colors duration-200 border-b"
-              >
-                <td className="py-4 px-6">{doctor.DoctorName}</td>
-                <td className="py-4 px-6">{doctor.Specialty}</td>
-                <td className="py-4 px-6">{doctor.contact}</td>
-                <td className="py-4 px-6">{doctor.PhoneDoctor}</td>
-                <td className="py-4 px-6">
-                  {doctor.Medical_license ? (
-                    <img
-                      src={doctor.Medical_license}
-                      alt="Doctor License"
-                      className="w-24 h-24 object-cover rounded-md"
-                    />
-                  ) : (
-                    <span>No Image</span>
-                  )}
-                </td>
-                <td className="py-4 px-6">
-                  <Button
-                    type="link"
-                    onClick={() => openModal(doctor)}
-                    className="text-yellow-600"
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    type="link"
-                    onClick={() => handleDeleteDoctor(doctor.id)}
-                    className="text-red-600"
-                  >
-                    Delete
-                  </Button>
-                </td>
+        <Spin spinning={loading}>
+          <table className="w-full bg-white rounded-lg">
+            <thead className="bg-yellow-700 text-white">
+              <tr>
+                <th className="py-4 px-6 text-left">ชื่อหมอ</th>
+                <th className="py-4 px-6 text-left">สายการแพทย์</th>
+                <th className="py-4 px-6 text-left">อีเมลล์</th>
+                <th className="py-4 px-6 text-left">เบอร์โทรศัพท์</th>
+                <th className="py-4 px-6 text-left">ประกาศนียบัตรการแพทย์</th>
+                <th className="py-4 px-6 text-left">การจัดการ</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {doctors.map((doctor) => (
+                <tr
+                  key={doctor.id}
+                  className="hover:bg-yellow-50 transition-colors duration-200 border-b"
+                >
+                  <td className="py-4 px-6">{doctor.DoctorName}</td>
+                  <td className="py-4 px-6">{doctor.Specialty}</td>
+                  <td className="py-4 px-6">{doctor.contact}</td>
+                  <td className="py-4 px-6">{doctor.PhoneDoctor}</td>
+                  <td className="py-4 px-6">
+                    {doctor.Medical_license ? (
+                      <img
+                        src={doctor.Medical_license}
+                        alt="Doctor License"
+                        className="w-24 h-24 object-cover rounded-md"
+                      />
+                    ) : (
+                      <span>No Image</span>
+                    )}
+                  </td>
+                  <td className="py-4 px-6">
+                    <Button
+                      type="link"
+                      onClick={() => openModal(doctor)}
+                      className="text-yellow-600"
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      type="link"
+                      onClick={() => handleDeleteDoctor(doctor.id)}
+                      className="text-red-600"
+                    >
+                      Delete
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Spin>
       </div>
 
       <Modal
@@ -249,7 +260,7 @@ export default function ManageDoctorsVets() {
         <Upload
           beforeUpload={(file) => {
             const isJpgOrPng =
-              file.type === "image/jpeg" || file.type === "image/jpeg";
+              file.type === "image/jpeg" || file.type === "image/png";
             if (!isJpgOrPng) {
               message.error("You can only upload JPG/PNG files!");
               return false;

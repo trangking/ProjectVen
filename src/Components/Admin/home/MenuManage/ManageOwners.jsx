@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import useStore from "../../../../store";
-import { Select } from "antd";
+import { Select, Spin } from "antd";
 import {
   fecthOwners,
   fetchedPets,
@@ -33,6 +33,7 @@ function AddOwnerModal({ isOpen, onClose, pets, owners, setOwners }) {
       // selectedPetIds.length === 0
     )
       return;
+
     try {
       await AddOwner(
         addMember,
@@ -411,21 +412,30 @@ export default function ManageOwners() {
   const [editIndex, setEditIndex] = useState(null);
   const [owners, setOwners] = useState([]);
   const [pets, setPets] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const handleDeleteOwner = async (index) => {
+    setLoading(true);
     const ownerId = owners[index].id;
     const ownerAuthId = owners[index].authId; // เก็บค่า authId (uid) ของเจ้าของ
     await deleteOwnerInFirebase(ownerId, ownerAuthId);
     const updatedOwners = owners.filter((_, i) => i !== index);
     setOwners(updatedOwners);
+    setLoading(false);
   };
 
   useEffect(() => {
     const fetchData = async () => {
-      const fetchedOwners = await fecthOwners();
-      const fetchedPet = await fetchedPets();
-      setOwners(fetchedOwners);
-      setPets(fetchedPet);
+      setLoading(true); // เริ่มแสดง loading ก่อนดึงข้อมูล
+      try {
+        const fetchedOwners = await fecthOwners();
+        const fetchedPet = await fetchedPets();
+        setOwners(fetchedOwners);
+        setPets(fetchedPet);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+      setLoading(false); // หยุดแสดง loading เมื่อข้อมูลถูกโหลดเสร็จ
     };
     fetchData();
   }, []);
@@ -450,42 +460,47 @@ export default function ManageOwners() {
             + เพิ่มเจ้าของใหม่
           </button>
         </div>
-
         {/* Owners table */}
         <div className="w-full max-w-3xl bg-white rounded-lg shadow-lg">
-          <table className="min-w-full bg-white rounded-lg overflow-hidden">
-            <thead className="bg-green-700 text-white">
-              <tr>
-                <th className="py-4 px-6 font-semibold text-left">ชื่อ</th>
-                <th className="py-4 px-6 font-semibold text-left">อีเมลล์</th>
-                <th className="py-4 px-6 font-semibold text-left">เบอร์โทร</th>
-                <th className="py-4 px-6 font-semibold text-left">การจัดการ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {owners.map((owner, index) => (
-                <tr key={index} className="border-b hover:bg-green-50">
-                  <td className="py-4 px-6">{owner.name}</td>
-                  <td className="py-4 px-6">{owner.contact}</td>
-                  <td className="py-4 px-6">{owner.phone}</td>
-                  <td className="py-4 px-6 flex gap-4">
-                    <button
-                      className="text-blue-500 hover:text-blue-600"
-                      onClick={() => openEditModal(index)}
-                    >
-                      แก้ไข
-                    </button>
-                    <button
-                      className="text-red-500 hover:text-red-600"
-                      onClick={() => handleDeleteOwner(index)}
-                    >
-                      ลบ
-                    </button>
-                  </td>
+          <Spin spinning={loading}>
+            <table className="min-w-full bg-white rounded-lg overflow-hidden">
+              <thead className="bg-green-700 text-white">
+                <tr>
+                  <th className="py-4 px-6 font-semibold text-left">ชื่อ</th>
+                  <th className="py-4 px-6 font-semibold text-left">อีเมลล์</th>
+                  <th className="py-4 px-6 font-semibold text-left">
+                    เบอร์โทร
+                  </th>
+                  <th className="py-4 px-6 font-semibold text-left">
+                    การจัดการ
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {owners.map((owner, index) => (
+                  <tr key={index} className="border-b hover:bg-green-50">
+                    <td className="py-4 px-6">{owner.name}</td>
+                    <td className="py-4 px-6">{owner.contact}</td>
+                    <td className="py-4 px-6">{owner.phone}</td>
+                    <td className="py-4 px-6 flex gap-4">
+                      <button
+                        className="text-blue-500 hover:text-blue-600"
+                        onClick={() => openEditModal(index)}
+                      >
+                        แก้ไข
+                      </button>
+                      <button
+                        className="text-red-500 hover:text-red-600"
+                        onClick={() => handleDeleteOwner(index)}
+                      >
+                        ลบ
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Spin>
         </div>
       </div>
 
