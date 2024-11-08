@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Input, Button, Select, InputNumber, Spin } from "antd";
+import { Input, Button, Select, InputNumber, Spin, Table } from "antd";
 import {
   addPetToFirebase,
   updatePetInFirebase,
   fetchedPets,
   deletePetInFirebase,
-} from "../../../../firebase/firebase"; // นำเข้า add และ update function
+} from "../../../../firebase/firebase";
 import useStore from "../../../../store";
-import { LoadingOutlined } from "@ant-design/icons";
+import { LoadingOutlined, SearchOutlined } from "@ant-design/icons";
 
 const { Option } = Select;
-
 const exoticBreeds = ["Snake", "Lizard", "Tortoise", "Parrot"];
 
 export default function ManageAnimals() {
@@ -22,6 +21,8 @@ export default function ManageAnimals() {
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
+  const [searchText, setSearchText] = useState("");
+  const [filteredPets, setFilteredPets] = useState([]);
 
   const openModal = (index = null) => {
     if (index !== null) {
@@ -39,42 +40,51 @@ export default function ManageAnimals() {
 
   useEffect(() => {
     const loadPets = async () => {
-      setLoading(true); // เริ่มแสดง loading
+      setLoading(true);
       const fetchedPet = await fetchedPets();
       setPets(fetchedPet);
-      setLoading(false); // หยุดการแสดง loading
+      setFilteredPets(fetchedPet); // แสดงทั้งหมดในครั้งแรก
+      setLoading(false);
     };
     loadPets();
   }, []);
 
   const handleDeletePet = async (petId) => {
     try {
-      setLoading(true); // เริ่มแสดง loading
-      console.log("Deleting pet with id:", petId);
+      setLoading(true);
       await deletePetInFirebase(petId);
       const updatedPets = pets.filter((pet) => pet.id !== petId);
       setPets(updatedPets);
+      setFilteredPets(updatedPets);
     } catch (error) {
       console.error("Error deleting pet:", error);
     }
-    setLoading(false); // หยุดการแสดง loading
+    setLoading(false);
+  };
+
+  const handleSearch = (event) => {
+    const value = event.target.value.toLowerCase();
+    setSearchText(value);
+    const filteredData = pets.filter(
+      (pet) =>
+        (pet.name && pet.name.toLowerCase().includes(value)) ||
+        (pet.type && pet.type.toLowerCase().includes(value)) ||
+        (pet.color && pet.color.toLowerCase().includes(value)) ||
+        (pet.NumberPet && String(pet.NumberPet).toLowerCase().includes(value))
+    );
+    setFilteredPets(filteredData);
   };
 
   const breedOptions = () => {
-    switch (newPet.type) {
-      case "Exotic":
-        return exoticBreeds.map((breed) => (
-          <Option key={breed} value={breed}>
-            {breed}
-          </Option>
-        ));
-      default:
-        return null;
-    }
+    return exoticBreeds.map((breed) => (
+      <Option key={breed} value={breed}>
+        {breed}
+      </Option>
+    ));
   };
 
   const handleAddOrUpdatePet = async () => {
-    setLoading(true); // เริ่มแสดง loading
+    setLoading(true);
     if (editIndex !== null) {
       const updatedPets = [...pets];
       const petId = pets[editIndex].id;
@@ -87,9 +97,44 @@ export default function ManageAnimals() {
         setPets([...pets, { ...newPet, id: petId }]);
       }
     }
-    setLoading(false); // หยุดการแสดง loading
+    setLoading(false);
     closeModal();
   };
+
+  const columns = [
+    {
+      title: "ชื่อ",
+      key: "name",
+      render: (text, record) => `${record.name} / ${record.NumberPet}`,
+    },
+    { title: "ประเภท", dataIndex: "type", key: "type" },
+    { title: "สี", dataIndex: "color", key: "color" },
+    { title: "น้ำหนัก", dataIndex: "weight", key: "weight" },
+    {
+      title: "อายุ",
+      key: "age",
+      render: (text, record) => `${record.years} ปี ${record.months} เดือน`,
+    },
+    { title: "เพศ", dataIndex: "gender", key: "gender" },
+    {
+      title: "การจัดการ",
+      key: "actions",
+      render: (text, record, index) => (
+        <>
+          <Button
+            type="link"
+            onClick={() => openModal(index)}
+            style={{ color: "green" }}
+          >
+            แก้ไข
+          </Button>
+          <Button type="link" danger onClick={() => handleDeletePet(record.id)}>
+            ลบ
+          </Button>
+        </>
+      ),
+    },
+  ];
 
   return (
     <>
@@ -97,7 +142,7 @@ export default function ManageAnimals() {
         <h1 className="text-3xl font-bold mb-8 text-green-600">
           จัดการสัตว์เลี้ยง
         </h1>
-        <div className="flex justify-end mb-8 w-full max-w-4xl">
+        <div className="flex justify-between mb-8 w-full max-w-4xl">
           <Button
             type="primary"
             className="bg-green-500 text-white py-3 px-6 rounded-lg shadow-md hover:bg-green-600 transition-transform transform hover:scale-105"
@@ -105,58 +150,28 @@ export default function ManageAnimals() {
           >
             + เพิ่มสัตว์เลี้ยงใหม่
           </Button>
+          <Input
+            placeholder="ค้นหาชื่อ ประเภท หรือสี"
+            value={searchText}
+            onChange={handleSearch}
+            style={{ width: "200px" }}
+            prefix={<SearchOutlined />}
+          />
         </div>
-        <div className="w-full max-w-4xl bg-white rounded-lg shadow-xl p-6">
+        <div className="w-full max-w-4xl  rounded-lg  p-6">
           <Spin indicator={<LoadingOutlined spin />} spinning={loading}>
-            <table className="min-w-full bg-white rounded-lg overflow-hidden">
-              <thead className="bg-green-200 text-green-700">
-                <tr>
-                  <th className="py-4 px-6 font-semibold text-left">ชื่อ</th>
-                  <th className="py-4 px-6 font-semibold text-left">ประเภท</th>
-                  <th className="py-4 px-6 font-semibold text-left">สี</th>
-                  <th className="py-4 px-6 font-semibold text-left">น้ำหนัก</th>
-                  <th className="py-4 px-6 font-semibold text-left">อายุ</th>
-                  <th className="py-4 px-6 font-semibold text-left">เพศ</th>
-                  <th className="py-4 px-6 font-semibold text-left">
-                    การจัดการ
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {pets.map((pet, index) => (
-                  <tr
-                    key={index}
-                    className="border-b hover:bg-green-50 transition-colors duration-200"
-                  >
-                    <td className="py-4 px-6">{pet.name}</td>
-                    <td className="py-4 px-6">{pet.type}</td>
-                    <td className="py-4 px-6">{pet.color}</td>
-                    <td className="py-4 px-6">{pet.weight}</td>
-                    <td className="py-4 px-6">
-                      {pet.years} ปี {pet.months} เดือน
-                    </td>
-                    <td className="py-4 px-6">{pet.gender}</td>
-                    <td className="py-4 px-6">
-                      <button
-                        className="text-green-500 hover:text-green-600 mr-4"
-                        onClick={() => openModal(index)}
-                      >
-                        แก้ไข
-                      </button>
-                      <button
-                        className="text-red-500 hover:text-red-600"
-                        onClick={() => handleDeletePet(pet.id)}
-                      >
-                        ลบ
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <Table
+              columns={columns}
+              dataSource={filteredPets}
+              rowKey="id"
+              pagination={{ pageSize: 5 }}
+              bordered
+            />
           </Spin>
         </div>
       </div>
+
+      {/* ส่วนของ Modal */}
       {isModalOpen && (
         <Spin indicator={<LoadingOutlined spin />} spinning={loading}>
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

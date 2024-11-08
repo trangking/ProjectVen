@@ -71,6 +71,7 @@ const addPetToFirebase = async (pet) => {
     const docRef = await addDoc(collection(db, "pets"), {
       ...pet,
       createdAt: new Date(),
+      NumberPet: Math.floor(Math.random() * 1000) + 1
     });
     return docRef.id; // คืนค่า id ของสัตว์เลี้ยงที่สร้างขึ้น
   } catch (error) {
@@ -556,6 +557,7 @@ const addAppointmentInDoctor = async (petId, doctorID, formattedTime, ownerId) =
       weight: petData.weight,
       type: petData.type,
       subType: petData.subType,
+      NumberPet: petData.NumberPet
     }
     const owners = {
       id: GetDocOwner.id,
@@ -621,6 +623,7 @@ const addAppointmentInAdmin = async (AddAppointment) => {
       weight: petData.weight,
       type: petData.type,
       subType: petData.subType,
+      NumberPet: petData.NumberPet
     }
     const owners = {
       id: GetDocOwner.id,

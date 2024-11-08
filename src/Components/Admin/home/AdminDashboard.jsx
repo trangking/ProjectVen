@@ -22,6 +22,7 @@ const { Option } = Select;
 export default function AdminDashboard() {
   const [searchTermPet, setSearchTermPet] = useState("");
   const [searchTermOwner, setSearchTermOwner] = useState("");
+  const [searchTermNubmerPet, setSearchTermNubmerPet] = useState("");
   const [appointments, setAppointments] = useState([]);
   const [appointmentTrue, setappointmentTrue] = useState([]);
   const [appointmentfalse, setappointmentfalse] = useState([]);
@@ -29,7 +30,7 @@ export default function AdminDashboard() {
   const [AppointmentsType, setAppointmentsType] = useState("ดูการนัดทั้งหมด");
   const [confirmStatus, setconfirmStatus] = useState(false);
   const [TypeconfirmStatus, setTypeconfirmStatus] = useState("");
-  const [loading, setLoading] = useState(false); // เพิ่ม state loading สำหรับการโหลดข้อมูล
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchAppointment = async () => {
@@ -68,7 +69,8 @@ export default function AdminDashboard() {
   const columns = [
     {
       title: "ชื่อสัตว์เลี้ยง",
-      dataIndex: ["pet", "0", "name"],
+      render: (text, record) =>
+        `${record.pet[0].name} / ${record.pet[0].NumberPet}`,
       key: "petName",
     },
     {
@@ -151,10 +153,14 @@ export default function AdminDashboard() {
   ).filter((appointment) => {
     const petName = appointment?.pet?.[0]?.name?.toLowerCase() || "";
     const ownerName = appointment?.owner?.[0]?.name?.toLowerCase() || "";
+    const numberPet = String(
+      appointment?.pet?.[0]?.NumberPet || ""
+    ).toLowerCase();
 
     return (
       petName.includes(searchTermPet.toLowerCase()) &&
-      ownerName.includes(searchTermOwner.toLowerCase())
+      ownerName.includes(searchTermOwner.toLowerCase()) &&
+      numberPet.includes(searchTermNubmerPet.toLowerCase())
     );
   });
 
@@ -207,7 +213,11 @@ export default function AdminDashboard() {
             value={searchTermPet}
             onChange={(e) => setSearchTermPet(e.target.value)}
           />
-
+          <Input
+            placeholder="ค้นหาด้วยเลขสัตว์เลี้ยง"
+            value={searchTermNubmerPet}
+            onChange={(e) => setSearchTermNubmerPet(e.target.value)}
+          />
           <Input
             placeholder="ค้นหาด้วยชื่อเจ้าของ"
             value={searchTermOwner}

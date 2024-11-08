@@ -53,7 +53,11 @@ export default function PetCards() {
   }, [ownerId]);
 
   const columns = [
-    { title: "ชื่อสัตว์", dataIndex: "name", key: "name" },
+    {
+      title: "ชื่อสัตว์",
+      key: "name",
+      render: (text, record) => `${record.name} / ${record.NumberPet}`,
+    },
     { title: "ประเภท", dataIndex: "type", key: "type" },
     { title: "สายพันธุ์", dataIndex: "subType", key: "subType" },
     { title: "อายุ (ปี)", dataIndex: "years", key: "years" },

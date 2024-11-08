@@ -53,12 +53,15 @@ const Doctorpage = () => {
   const [vaccine_dose, setvaccine_dose] = useState("");
   const logout = useStore((state) => state.logout);
   const [searchText, setSearchText] = useState("");
+  const [searchTextap, setSearchTextap] = useState("");
   const [filteredPets, setFilteredPets] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!token) {
-      navigate("/"); // ถ้าไม่มี token ให้นำผู้ใช้กลับไปที่หน้าแรกหรือหน้าเข้าสู่ระบบ
+    if (!doctor && !doctor.Name && !token) {
+      navigate("/");
+      message.error("กรุณาล็อคอิน");
+      return;
     }
     const timer = setTimeout(() => {
       localStorage.removeItem("token");
@@ -208,12 +211,38 @@ const Doctorpage = () => {
     console.log("ผลการค้นหา:", filtered);
   };
 
+  const handleSearchap = (event) => {
+    const searchValue = event.target.value.toLowerCase();
+    setSearchText(searchValue); // อัปเดตค่าในช่องค้นหา
+
+    if (searchValue) {
+      const filteredData = appointments.filter(
+        (appointment) =>
+          appointment.pet &&
+          appointment.pet[0] && // ตรวจสอบว่ามีข้อมูล pet[0] หรือไม่
+          ((appointment.pet[0].name &&
+            appointment.pet[0].name.toLowerCase().includes(searchValue)) ||
+            (appointment.pet[0].NumberPet &&
+              String(appointment.pet[0].NumberPet)
+                .toLowerCase()
+                .includes(searchValue)))
+      );
+      setFilteredAppointments(filteredData);
+    } else {
+      setFilteredAppointments(appointments); // ถ้าช่องค้นหาว่าง แสดงข้อมูลทั้งหมด
+    }
+  };
+
   const handleSearch = (event) => {
     const searchValue = event.target.value.toLowerCase();
     setSearchText(searchValue);
+
     if (searchValue) {
-      const filteredData = pets.filter((pet) =>
-        pet.name.toLowerCase().includes(searchValue)
+      const filteredData = pets.filter(
+        (pet) =>
+          (pet.name && pet.name.toLowerCase().includes(searchValue)) ||
+          (pet.NumberPet &&
+            String(pet.NumberPet).toLowerCase().includes(searchValue))
       );
       setFilteredPets(filteredData);
     } else {
@@ -225,7 +254,8 @@ const Doctorpage = () => {
     <div className="manage-doctor">
       <div className="header bg-yellow-500 text-white p-4 text-center mb-4">
         <h1 className="text-3xl font-bold">
-          ตารางนัดของหมอ: {doctor.DoctorName}
+          ตารางนัดของหมอ:{" "}
+          {doctor && doctor.DoctorName ? doctor.DoctorName : "ค้นหาชื่อไม่เจอ"}
         </h1>
       </div>
 
@@ -237,6 +267,15 @@ const Doctorpage = () => {
             <Form layout="inline">
               <Form.Item name="date" label="เลือกวันที่">
                 <DatePicker onChange={handleDateSearch} />
+              </Form.Item>
+
+              <Form.Item name="seachpet" label="ค้นหาสัตว์เลี้ยง">
+                <Input
+                  placeholder="ค้นหาชื่อสัตว์ / เลขสัตว์เลี้ยง"
+                  value={searchText}
+                  onChange={handleSearchap}
+                  style={{ width: "200px" }} // ปรับขนาดช่องค้นหาให้เหมาะสม
+                />
               </Form.Item>
 
               <Form.Item>
@@ -265,9 +304,10 @@ const Doctorpage = () => {
                     key: "time",
                   },
                   {
-                    title: "ชื่อสัตว์เลี้ยง",
-                    dataIndex: ["pet", "0", "name"],
-                    key: "petName",
+                    title: "ชื่อสัตว์",
+                    key: "name",
+                    render: (text, record) =>
+                      `${record.pet[0].name} / ${record.pet[0].NumberPet}`, // รวม name และ NumberPet
                   },
                   {
                     title: "ประเภทสัตว์เลี้ยง",
@@ -343,7 +383,7 @@ const Doctorpage = () => {
 
             {/* ช่องค้นหาชื่อสัตว์ */}
             <Input
-              placeholder="ค้นหาชื่อสัตว์"
+              placeholder="ค้นหาชื่อสัตว์ / เลขสัตว์เลี้ยง"
               value={searchText}
               onChange={handleSearch}
               className="mb-4"
@@ -355,7 +395,12 @@ const Doctorpage = () => {
             <Table
               dataSource={filteredPets}
               columns={[
-                { title: "ชื่อสัตว์", dataIndex: "name", key: "name" },
+                {
+                  title: "ชื่อสัตว์",
+                  key: "name",
+                  render: (text, record) =>
+                    `${record.name} / ${record.NumberPet}`, // รวม name และ NumberPet
+                },
                 { title: "ประเภท", dataIndex: "type", key: "type" },
                 { title: "สายพันธุ์", dataIndex: "subType", key: "subType" },
                 { title: "เจ้าของ", dataIndex: "ownerName", key: "ownerName" },

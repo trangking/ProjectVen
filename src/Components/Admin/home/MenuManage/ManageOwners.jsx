@@ -328,12 +328,16 @@ function EditOwnerModal({
             <div className="flex flex-row justify-between items-center">
               <h3 className="text-lg font-semibold mb-2">เลือกสัตว์เลี้ยง</h3>
               <Select
+                showSearch
                 placeholder="กรุณาเลือกสัตว์เลี้ยง"
                 className="w-1/2"
                 value={petToAdd}
-                onChange={(value) => setPetToAdd(value)} // เลือกสัตว์เลี้ยงทีละตัว
+                onChange={(value) => setPetToAdd(value)}
+                filterOption={(input, option) =>
+                  option.label.toLowerCase().includes(input.toLowerCase())
+                }
                 options={pets.map((pet) => ({
-                  label: pet.name, // แสดงชื่อสัตว์เลี้ยง
+                  label: `${pet.name} / ${pet.NumberPet}`, // แสดงชื่อสัตว์เลี้ยง
                   value: pet.id, // ใช้ id ของสัตว์เลี้ยงเป็นค่า
                 }))}
               />
@@ -370,7 +374,9 @@ function EditOwnerModal({
                       key={id}
                       className="border-b hover:bg-green-50 transition-colors"
                     >
-                      <td className="py-4 px-6">{pet ? pet.name : id}</td>
+                      <td className="py-4 px-6">
+                        {pet ? pet.name : id} / {pet ? pet.NumberPet : 0}
+                      </td>
                       <td className="py-4 px-6">
                         <button
                           className="text-red-500 hover:text-red-600 font-medium"
