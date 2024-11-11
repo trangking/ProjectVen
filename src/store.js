@@ -1,8 +1,11 @@
 import { create } from "zustand";
 
 const useStore = create((set) => ({
-  addMember: "",
-  setAddMember: (newMember) => set({ addMember: newMember }),
+  firstName: "",
+  setfirstName: (firstName) => set({ firstName: firstName }),
+
+  lastnameOwner: "",
+  setLastnameOwner: (lastname) => set({ lastnameOwner: lastname }),
 
   addEmailMember: "",
   setEmailMember: (EmailMember) => set({ addEmailMember: EmailMember }),

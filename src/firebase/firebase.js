@@ -26,6 +26,7 @@ import {
   deleteObject,
 } from "firebase/storage";
 import { v4 } from "uuid";
+import { message } from "antd";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCB_tQwjnuTKgla0sZwnu_Q__zYYiOPBRE",
@@ -91,7 +92,8 @@ const updatePetInFirebase = async (petId, updatedPetData) => {
 };
 
 const AddOwner = async (
-  addMember,
+  firstName,
+  lastnameOwner,
   addEmailMember,
   addPhoneMember,
   addAddressMember,
@@ -109,7 +111,8 @@ const AddOwner = async (
       addPassword,
     );
     const newOwnerData = {
-      name: addMember,
+      name: firstName,
+      lastnameOwner: lastnameOwner,
       password: addPassword,
       contact: addEmailMember,
       phone: addPhoneMember,
@@ -126,7 +129,7 @@ const AddOwner = async (
       const petDocRef = doc(db, "pets", petId);
       await updateDoc(petDocRef, {
         ownerId: userId,
-        ownerName: addMember
+        ownerName: firstName
       });
     });
     await Promise.all(updatePetPromises);
@@ -521,6 +524,9 @@ const addAppointmentInDoctor = async (petId, doctorID, formattedTime, ownerId) =
   console.log("petID", petId);
   console.log("doctorID", doctorID);
   console.log("ownerID", ownerId);
+  if (!ownerId) {
+    return message.error("สัตว์เลี้ยงยังไม่มีเจ้าของ");
+  }
   try {
     const petDocRef = doc(db, "pets", petId); // เอกสารสัตว์เลี้ยง
     const doctorDocRef = doc(db, "doctorsVen", doctorID); // เอกสารแพทย์
@@ -562,6 +568,7 @@ const addAppointmentInDoctor = async (petId, doctorID, formattedTime, ownerId) =
     const owners = {
       id: GetDocOwner.id,
       name: ownerData.name,
+      lastname: ownerData.lastnameOwner,
       phone: ownerData.phone
     }
     // สร้างข้อมูลการนัดหมายใหม่
@@ -579,10 +586,11 @@ const addAppointmentInDoctor = async (petId, doctorID, formattedTime, ownerId) =
 
     const docRef = await addDoc(collection(db, "appointment"), AddAppointMent);
     console.log("Appointment added successfully");
+    message.success("การจัดการให้วัคซีนเรียบร้อยแล้ว");
     return docRef.id;
 
   } catch (error) {
-    console.error("Error adding appointment: ", error); // แสดงข้อผิดพลาด
+    console.error("Error adding appointment: ", error);
   }
 };
 
@@ -628,6 +636,7 @@ const addAppointmentInAdmin = async (AddAppointment) => {
     const owners = {
       id: GetDocOwner.id,
       name: ownerData.name,
+      lastname: ownerData.lastnameOwner,
       phone: ownerData.phone
     }
     // สร้างข้อมูลการนัดหมายใหม่

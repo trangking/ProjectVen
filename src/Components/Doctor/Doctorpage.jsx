@@ -149,7 +149,6 @@ const Doctorpage = () => {
         doctor.id,
         vaccine_dose
       );
-      message.success("เพิ่มการรักษาเรียบร้อยแล้ว");
       setIsModalVisible(false);
       setSelectedPet({});
       setVaccineId("");
@@ -158,7 +157,7 @@ const Doctorpage = () => {
       setSelectedTime(null);
       form.resetFields();
     } catch (error) {
-      message.error("เกิดข้อผิดพลาดในการเพิ่มการรักษา");
+      message.error("เกิดข้อผิดพลาดในการการจัดการให้วัคซีน");
     }
     setLoading(false); // หยุดแสดง loading spinner เมื่อเสร็จสิ้น
     handleCancel();
@@ -178,7 +177,6 @@ const Doctorpage = () => {
   const handleTimeChange = (time) => {
     if (time) {
       setSelectedTime(time);
-      console.log(time.format("HH:mm"));
     } else {
       setSelectedTime(null);
     }
@@ -326,7 +324,8 @@ const Doctorpage = () => {
                   },
                   {
                     title: "ชื่อเจ้าของ",
-                    dataIndex: ["owner", "0", "name"],
+                    render: (text, record) =>
+                      `${record.owner[0].name}  ${record.owner[0].lastname}`,
                     key: "ownerName",
                   },
                   {
@@ -352,7 +351,7 @@ const Doctorpage = () => {
                     render: (status) => (status ? "เสร็จสิ้น" : "รอดำเนินการ"),
                   },
                   {
-                    title: "เพิ่มการรักษา",
+                    title: "การจัดการให้วัคซีน",
                     render: (text, record) => (
                       <div
                         style={{
@@ -417,7 +416,7 @@ const Doctorpage = () => {
                   ),
                 },
                 {
-                  title: "เพิ่มการรักษา",
+                  title: "การจัดการให้วัคซีน",
                   key: "addTreatment",
                   render: (text, record) => (
                     <Button type="primary" onClick={() => showModal(record)}>
@@ -433,7 +432,7 @@ const Doctorpage = () => {
         </Tabs>
 
         <Modal
-          title={`เพิ่มการรักษาสำหรับ ${selectedPet?.name}`}
+          title={`การจัดการให้วัคซีนสำหรับ ${selectedPet?.name}`}
           visible={isModalVisible}
           onOk={handleAddTreatment}
           onCancel={handleCancel}
@@ -533,7 +532,7 @@ const Doctorpage = () => {
                       นัดครั้งถัดไป
                     </th>
                     <th className="px-4 py-2 border border-pink-300">
-                      สติ๊กเกอร์
+                      ฉลากวัดคซีน
                     </th>
                   </tr>
                 </thead>

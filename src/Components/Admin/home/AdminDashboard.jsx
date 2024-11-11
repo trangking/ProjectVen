@@ -75,7 +75,8 @@ export default function AdminDashboard() {
     },
     {
       title: "เจ้าของ",
-      dataIndex: ["owner", "0", "name"],
+      render: (text, record) =>
+        `${record.owner[0].name} / ${record.owner[0].lastname}`,
       key: "owner",
     },
     {
@@ -94,7 +95,7 @@ export default function AdminDashboard() {
       key: "time",
     },
     {
-      title: "เบอร์โทร",
+      title: "เบอร์โทรศัพท์",
       dataIndex: ["owner", "0", "phone"],
       key: "phone",
     },

@@ -164,10 +164,10 @@ export default function AppointmentForm() {
             {/* Phone Number */}
             <Form.Item
               name="phoneNumber"
-              label="เบอร์โทร"
-              rules={[{ required: true, message: "กรุณากรอกเบอร์โทร" }]}
+              label="เบอร์โทรศัพท์"
+              rules={[{ required: true, message: "กรุณากรอกเบอร์โทรศัพท์" }]}
             >
-              <Input placeholder="กรอกเบอร์โทร" disabled />
+              <Input placeholder="กรอกเบอร์โทรศัพท์" disabled />
             </Form.Item>
 
             {/* Appointment Date */}

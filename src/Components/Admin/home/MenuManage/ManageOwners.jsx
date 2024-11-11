@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import useStore from "../../../../store";
-import { Select, Spin } from "antd";
+import { Select, Button, Spin, Table } from "antd";
 import {
   fecthOwners,
   fetchedPets,
@@ -12,8 +12,10 @@ import {
 // คอมโพเนนต์สำหรับเพิ่มเจ้าของสัตว์เลี้ยง
 function AddOwnerModal({ isOpen, onClose, pets, owners, setOwners }) {
   const [selectedPetIds, setSelectedPetIds] = useState([]);
-  const addMember = useStore((state) => state.addMember);
-  const setAddMember = useStore((state) => state.setAddMember);
+  const firstName = useStore((state) => state.firstName);
+  const setfirstName = useStore((state) => state.setfirstName);
+  const lastnameOwner = useStore((state) => state.lastnameOwner);
+  const setLastnameOwner = useStore((state) => state.setLastnameOwner);
   const addPassword = useStore((state) => state.addPassword);
   const setAddPassword = useStore((state) => state.setAddPassword);
   const addEmailMember = useStore((state) => state.addEmailMember);
@@ -25,7 +27,8 @@ function AddOwnerModal({ isOpen, onClose, pets, owners, setOwners }) {
 
   const handleAddOwner = async () => {
     if (
-      !addMember ||
+      !firstName ||
+      !lastnameOwner ||
       !addEmailMember ||
       !addPhoneMember ||
       !addPassword
@@ -36,7 +39,8 @@ function AddOwnerModal({ isOpen, onClose, pets, owners, setOwners }) {
 
     try {
       await AddOwner(
-        addMember,
+        firstName,
+        lastnameOwner,
         addEmailMember,
         addPhoneMember,
         addAddressMember,
@@ -82,7 +86,19 @@ function AddOwnerModal({ isOpen, onClose, pets, owners, setOwners }) {
               type="text"
               placeholder="กรอกชื่อเจ้าของ"
               className="w-full p-4 border border-gray-300 rounded-md"
-              onChange={(e) => setAddMember(e.target.value)}
+              onChange={(e) => setfirstName(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">
+              นามสกุลเจ้าของ
+            </label>
+            <input
+              type="text"
+              placeholder="กรอกนามสกุลเจ้าของ"
+              className="w-full p-4 border border-gray-300 rounded-md"
+              onChange={(e) => setLastnameOwner(e.target.value)}
             />
           </div>
 
@@ -100,11 +116,11 @@ function AddOwnerModal({ isOpen, onClose, pets, owners, setOwners }) {
 
           <div>
             <label className="block text-gray-700 font-semibold mb-2">
-              เบอร์โทร
+              เบอร์โทรศัพท์
             </label>
             <input
               type="text"
-              placeholder="กรอกเบอร์โทร"
+              placeholder="กรอกเบอร์โทรศัพท์"
               className="w-full p-4 border border-gray-300 rounded-md"
               onChange={(e) => setPhoneMember(e.target.value)}
             />
@@ -183,8 +199,10 @@ function EditOwnerModal({
   setOwners,
 }) {
   const [selectedPetIds, setSelectedPetIds] = useState([]);
-  const addMember = useStore((state) => state.addMember);
-  const setAddMember = useStore((state) => state.setAddMember);
+  const firstName = useStore((state) => state.firstName);
+  const setfirstName = useStore((state) => state.setfirstName);
+  const lastnameOwner = useStore((state) => state.lastnameOwner);
+  const setLastnameOwner = useStore((state) => state.setLastnameOwner);
   const addEmailMember = useStore((state) => state.addEmailMember);
   const setEmailMember = useStore((state) => state.setEmailMember);
   const addPhoneMember = useStore((state) => state.addPhoneMember);
@@ -196,7 +214,8 @@ function EditOwnerModal({
   useEffect(() => {
     if (editIndex !== null) {
       const selectedOwner = owners[editIndex];
-      setAddMember(selectedOwner.name);
+      setfirstName(selectedOwner.name);
+      setLastnameOwner(selectedOwner.lastnameOwner);
       setEmailMember(selectedOwner.contact);
       setPhoneMember(selectedOwner.phone || "");
       setAddressMember(selectedOwner.address || "");
@@ -205,14 +224,16 @@ function EditOwnerModal({
   }, [editIndex]);
 
   const handleUpdateOwner = async () => {
-    if (!addMember || !addEmailMember || !addPhoneMember) return;
+    if (!firstName || !lastnameOwner || !addEmailMember || !addPhoneMember)
+      return;
 
     try {
       const ownerId = owners[editIndex].id;
       const previousPetIds = owners[editIndex].petIds || [];
 
       const updatedOwnerData = {
-        name: addMember,
+        name: firstName,
+        lastnameOwner: lastnameOwner,
         contact: addEmailMember,
         phone: addPhoneMember,
         address: addAddressMember,
@@ -279,8 +300,20 @@ function EditOwnerModal({
               type="text"
               placeholder="กรอกชื่อเจ้าของ"
               className="w-full p-4 border border-gray-300 rounded-md"
-              value={addMember}
-              onChange={(e) => setAddMember(e.target.value)}
+              value={firstName}
+              onChange={(e) => setfirstName(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">
+              นามสกุลเจ้าของ
+            </label>
+            <input
+              type="text"
+              placeholder="กรอกชื่อเจ้าของ"
+              className="w-full p-4 border border-gray-300 rounded-md"
+              value={lastnameOwner}
+              onChange={(e) => setLastnameOwner(e.target.value)}
             />
           </div>
 
@@ -299,11 +332,11 @@ function EditOwnerModal({
 
           <div>
             <label className="block text-gray-700 font-semibold mb-2">
-              เบอร์โทร
+              เบอร์โทรศัพท์
             </label>
             <input
               type="text"
-              placeholder="กรอกเบอร์โทร"
+              placeholder="กรอกเบอร์โทรศัพท์"
               className="w-full p-4 border border-gray-300 rounded-md"
               value={addPhoneMember}
               onChange={(e) => setPhoneMember(e.target.value)}
@@ -451,6 +484,57 @@ export default function ManageOwners() {
     setEditModalOpen(true);
   };
 
+  const paginationConfig = {
+    pageSize: 5, // Number of items per page
+    // showSizeChanger: true,
+  };
+
+  const columns = [
+    {
+      title: "ชื่อ",
+      dataIndex: "name",
+      key: "name",
+    },
+    {
+      title: "นามสกุล",
+      dataIndex: "lastnameOwner",
+      key: "lastnameOwner",
+    },
+    {
+      title: "อีเมลล์",
+      dataIndex: "contact",
+      key: "contact",
+    },
+    {
+      title: "เบอร์โทรศัพท์",
+      dataIndex: "phone",
+      key: "phone",
+    },
+    {
+      title: "การจัดการ",
+      key: "action",
+      render: (_, record, index) => (
+        <>
+          <Button
+            type="link"
+            onClick={() => openEditModal(index)}
+            className="text-blue-500 hover:text-blue-600"
+          >
+            แก้ไข
+          </Button>
+          <Button
+            type="link"
+            danger
+            onClick={() => handleDeleteOwner(index)}
+            className="text-red-500 hover:text-red-600"
+          >
+            ลบ
+          </Button>
+        </>
+      ),
+    },
+  ];
+
   return (
     <>
       <div className="w-full h-screen p-10 flex flex-col items-center">
@@ -469,43 +553,12 @@ export default function ManageOwners() {
         {/* Owners table */}
         <div className="w-full max-w-3xl bg-white rounded-lg shadow-lg">
           <Spin spinning={loading}>
-            <table className="min-w-full bg-white rounded-lg overflow-hidden">
-              <thead className="bg-green-700 text-white">
-                <tr>
-                  <th className="py-4 px-6 font-semibold text-left">ชื่อ</th>
-                  <th className="py-4 px-6 font-semibold text-left">อีเมลล์</th>
-                  <th className="py-4 px-6 font-semibold text-left">
-                    เบอร์โทร
-                  </th>
-                  <th className="py-4 px-6 font-semibold text-left">
-                    การจัดการ
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {owners.map((owner, index) => (
-                  <tr key={index} className="border-b hover:bg-green-50">
-                    <td className="py-4 px-6">{owner.name}</td>
-                    <td className="py-4 px-6">{owner.contact}</td>
-                    <td className="py-4 px-6">{owner.phone}</td>
-                    <td className="py-4 px-6 flex gap-4">
-                      <button
-                        className="text-blue-500 hover:text-blue-600"
-                        onClick={() => openEditModal(index)}
-                      >
-                        แก้ไข
-                      </button>
-                      <button
-                        className="text-red-500 hover:text-red-600"
-                        onClick={() => handleDeleteOwner(index)}
-                      >
-                        ลบ
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <Table
+              columns={columns}
+              dataSource={owners}
+              rowKey={(record) => record.id || record.key}
+              pagination={paginationConfig}
+            />
           </Spin>
         </div>
       </div>
