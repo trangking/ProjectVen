@@ -100,6 +100,7 @@ export default function ManageAnimals() {
     setLoading(false);
     closeModal();
   };
+  console.log(pets);
 
   const columns = [
     {
@@ -113,9 +114,15 @@ export default function ManageAnimals() {
     {
       title: "อายุ",
       key: "age",
-      render: (text, record) => `${record.years} ปี ${record.months} เดือน`,
+      dataIndex: "age",
     },
     { title: "เพศ", dataIndex: "gender", key: "gender" },
+    {
+      title: "สถานะ",
+      render: (text, record) =>
+        record.pet_status === "die" ? "เสียชีวิต" : "มีชีวิต",
+      key: "petstatus",
+    },
     {
       title: "การจัดการ",
       key: "actions",
@@ -322,6 +329,20 @@ export default function ManageAnimals() {
                   >
                     <Option value="Male">เพศผู้</Option>
                     <Option value="Female">เพศเมีย</Option>
+                  </Select>
+                  <label className="block text-sm font-medium text-gray-700">
+                    สถานะของสัตว์เลี้ยง
+                  </label>
+                  <Select
+                    placeholder="สถานะของสัตว์เลี้ยง"
+                    value={newPet.pet_status}
+                    onChange={(value) =>
+                      setNewPet({ ...newPet, pet_status: value })
+                    }
+                    className="mt-1 w-full  border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
+                  >
+                    <Option value="alive">มีชีวิต</Option>
+                    <Option value="die">เสียชีวิต</Option>
                   </Select>
                 </div>
               </form>

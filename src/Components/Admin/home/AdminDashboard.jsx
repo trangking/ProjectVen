@@ -70,7 +70,7 @@ export default function AdminDashboard() {
     {
       title: "ชื่อสัตว์เลี้ยง",
       render: (text, record) =>
-        `${record.pet[0].name} / ${record.pet[0].NumberPet}`,
+        `${record.pet[0].name}/ ${record.pet[0].subType} / ${record.pet[0].NumberPet} `,
       key: "petName",
     },
     {

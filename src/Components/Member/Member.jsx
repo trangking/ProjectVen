@@ -108,21 +108,30 @@ export default function PetCards() {
               <thead>
                 <tr className="bg-pink-200">
                   <th className="px-4 py-2 border border-pink-300">
-                    Vaccination Against
+                    การฉีดวัคซีน
                   </th>
                   <th className="px-4 py-2 border border-pink-300">
-                    Batch No.
+                    หมายเลขชุดวัคซีน
                   </th>
                   <th className="px-4 py-2 border border-pink-300">
-                    Date of Vaccination
+                    วันที่ฉีดวัคซีน
                   </th>
                   <th className="px-4 py-2 border border-pink-300">
-                    ปริมาณวัคซีน
+                    หมอที่ทำการฉีดวัคซีน
                   </th>
                   <th className="px-4 py-2 border border-pink-300">
-                    Next Vaccination
+                    เลขที่ใบอนุญาติ
                   </th>
-                  <th className="px-4 py-2 border border-pink-300">Sticker</th>
+                  <th className="px-4 py-2 border border-pink-300">
+                    ปริมาณการฉีดวัคซีน
+                  </th>
+                  <th className="px-4 py-2 border border-pink-300">
+                    นัดครั้งถัดไป
+                  </th>
+                  <th className="px-4 py-2 border border-pink-300">
+                    ฉลากวัดคซีน
+                  </th>
+                  <th className="px-4 py-2 border border-pink-300">หมายเหตุ</th>
                 </tr>
               </thead>
               <tbody>
@@ -134,14 +143,16 @@ export default function PetCards() {
                         {item.vaccine.vaccineName}
                       </td>
                       <td className="px-4 py-2 border border-pink-300">
-                        <img
-                          src={item.batchNo}
-                          alt={`Batch No. ${index + 1}`}
-                          className="w-12 h-12 object-contain"
-                        />
+                        {item.No_vaccine}
                       </td>
                       <td className="px-4 py-2 border border-pink-300">
                         {item.DateVaccination}
+                      </td>
+                      <td className="px-4 py-2 border border-pink-300">
+                        {item.doctorName}
+                      </td>
+                      <td className="px-4 py-2 border border-pink-300">
+                        {item.Animal_Registration_Number}
                       </td>
                       <td className="px-4 py-2 border border-pink-300">
                         {item.vaccine_dose}
@@ -149,20 +160,21 @@ export default function PetCards() {
                       <td className="px-4 py-2 border border-pink-300">
                         {item.nextAppointmentDate}
                       </td>
+                      <td className="px-4 py-2 border border-pink-300 flex justify-center">
+                        <img
+                          src={item.vaccine.vaccineImage}
+                          alt={`Sticker for ${item.vaccine.vaccineImage}`}
+                          className="w-20 h-20 object-contain"
+                        />
+                      </td>
                       <td className="px-4 py-2 border border-pink-300">
-                        <div className="flex justify-center">
-                          <img
-                            src={item.vaccine.vaccineImage}
-                            alt={`Sticker for ${item.vaccine.vaccineName}`}
-                            className="w-12 h-12 object-contain"
-                          />
-                        </div>
+                        {item.description}
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="text-center">
+                    <td colSpan="5" className="text-center w-full h-[50px]">
                       ไม่มีข้อมูลการรักษา
                     </td>
                   </tr>

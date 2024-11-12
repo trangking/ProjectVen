@@ -17,7 +17,12 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { createUserWithEmailAndPassword, deleteUser, updateEmail, updatePassword } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  deleteUser,
+  updateEmail,
+  updatePassword,
+} from "firebase/auth";
 import {
   getStorage,
   ref,
@@ -35,7 +40,7 @@ const firebaseConfig = {
   storageBucket: "appointmentanimals.appspot.com",
   messagingSenderId: "1050401290587",
   appId: "1:1050401290587:web:334811bfbd2c1fae3e427e",
-  measurementId: "G-CTX071QNLL"
+  measurementId: "G-CTX071QNLL",
 };
 
 // Initialize Firebase
@@ -59,11 +64,41 @@ const fecthOwners = async () => {
 const fetchedPets = async () => {
   const colRef = collection(db, "pets");
   const snapshot = await getDocs(colRef);
-  const data = snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  const data = await Promise.all(
+    snapshot.docs.map(async (doc) => {
+      const petData = doc.data();
+      const age = await calculateAndUpdateAge(doc.id, doc.data());
+      const ownerData = petData.ownerId
+        ? await fetchedOwnerByID(petData.ownerId)
+        : null;
+      return {
+        id: doc.id,
+        ...doc.data(),
+        age, // เพิ่มฟิลด์อายุที่คำนวณแล้ว
+        owner: ownerData ? ownerData.name : "Unknown",
+      };
+    })
+  );
   return data;
+};
+
+const fetchedOwnerByID = async (ownerID) => {
+  try {
+    // Reference the specific document by doctorID
+    const docRef = doc(db, "owners", ownerID);
+    const snapshot = await getDoc(docRef);
+
+    if (snapshot.exists()) {
+      // Return the data along with the ID
+      return { id: snapshot.id, ...snapshot.data() };
+    } else {
+      console.log("Doctor document not found.");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching doctor data:", error);
+    return null;
+  }
 };
 
 // Add pet to Firebase
@@ -72,7 +107,7 @@ const addPetToFirebase = async (pet) => {
     const docRef = await addDoc(collection(db, "pets"), {
       ...pet,
       createdAt: new Date(),
-      NumberPet: Math.floor(Math.random() * 1000) + 1
+      NumberPet: Math.floor(Math.random() * 1000) + 1,
     });
     return docRef.id; // คืนค่า id ของสัตว์เลี้ยงที่สร้างขึ้น
   } catch (error) {
@@ -98,7 +133,7 @@ const AddOwner = async (
   addPhoneMember,
   addAddressMember,
   addPassword,
-  selectedPetIds, // Multiple pet selection
+  selectedPetIds // Multiple pet selection
 ) => {
   // ตรวจสอบว่าไม่ได้ปล่อยให้ฟิลด์ที่จำเป็นว่างเปล่า
   // if (!addMember || !addEmailMember || !addPhoneMember || selectedPetIds.length === 0)
@@ -108,7 +143,7 @@ const AddOwner = async (
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       addEmailMember,
-      addPassword,
+      addPassword
     );
     const newOwnerData = {
       name: firstName,
@@ -129,7 +164,7 @@ const AddOwner = async (
       const petDocRef = doc(db, "pets", petId);
       await updateDoc(petDocRef, {
         ownerId: userId,
-        ownerName: firstName
+        ownerName: firstName,
       });
     });
     await Promise.all(updatePetPromises);
@@ -139,13 +174,17 @@ const AddOwner = async (
   }
 };
 
-
 // Update existing owner and change linked pet
-const updateOwnerInFirebase = async (ownerId, updatedOwnerData, previousPetIds, newPetIds) => {
+const updateOwnerInFirebase = async (
+  ownerId,
+  updatedOwnerData,
+  previousPetIds,
+  newPetIds
+) => {
   try {
     // ตรวจสอบว่า ownerId เป็น string และมีค่า
-    if (!ownerId || typeof ownerId !== 'string') {
-      throw new Error('Invalid ownerId');
+    if (!ownerId || typeof ownerId !== "string") {
+      throw new Error("Invalid ownerId");
     }
 
     // อัปเดตข้อมูลเจ้าของใน Firestore
@@ -176,7 +215,6 @@ const updateOwnerInFirebase = async (ownerId, updatedOwnerData, previousPetIds, 
     console.error("Error updating owner or pets:", error);
   }
 };
-
 
 const deleteOwnerInFirebase = async (ownerId) => {
   try {
@@ -323,6 +361,7 @@ const addNewDoctors = async (newDoctor, img) => {
     password: newDoctor.password,
     PhoneDoctor: newDoctor.phone,
     Medical_license: uploadedImageUrl,
+    Animal_Registration_Number: newDoctor.Animal_Registration_Number,
     roleType: type,
     createdAt: serverTimestamp(),
   };
@@ -463,20 +502,36 @@ const deleteVaccineInFirebase = async (vaccineId, imageUrl) => {
   }
 };
 
-const addNEwTreatment = async (petId, vaccineId, treatmentsdec, nextAppointmentDate, selectedTime, ownerId, doctorID, vaccine_dose) => {
+const addNEwTreatment = async (
+  petId,
+  vaccineId,
+  treatmentsdec,
+  nextAppointmentDate,
+  selectedTime,
+  ownerId,
+  doctorID,
+  vaccine_dose,
+  No_vaccine
+) => {
   try {
     const petDocRef = doc(db, "pets", petId); // เอกสารสัตว์เลี้ยง
-    const vaccineDocRef = doc(db, "vaccine", vaccineId); // เอกสารวัคซีน
-
-    // ดึงข้อมูลวัคซีน
+    const vaccineDocRef = doc(db, "vaccine", vaccineId);
+    const doctorDocRef = doc(db, "doctorsVen", doctorID);
+    const GetDoctor = await getDoc(doctorDocRef);
+    const doctorData = GetDoctor.data();
     const vaccineDoc = await getDoc(vaccineDocRef);
 
     if (vaccineDoc.exists()) {
       console.log("Vaccine Document:", vaccineDoc.data()); // แสดงข้อมูลวัคซีน
-
-      // สร้างข้อมูลการรักษาใหม่
       const convenDatae = new Date();
-      const formattedDate = `${convenDatae.getFullYear()}-${(convenDatae.getMonth() + 1).toString().padStart(2, '0')}-${convenDatae.getDate().toString().padStart(2, '0')}`;
+      const formattedDate = `${convenDatae.getFullYear()}-${(
+        convenDatae.getMonth() + 1
+      )
+        .toString()
+        .padStart(2, "0")}-${convenDatae
+          .getDate()
+          .toString()
+          .padStart(2, "0")}`;
       const timeNextAppointment = new Date(selectedTime); // แปลง selectedTime เป็น Date
 
       // ดึงเฉพาะเวลา (ชั่วโมง:นาที) จาก Date
@@ -484,16 +539,26 @@ const addNEwTreatment = async (petId, vaccineId, treatmentsdec, nextAppointmentD
       const minutes = timeNextAppointment.getMinutes();
 
       // รูปแบบเวลาเป็น "HH:MM"
-      const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      const formattedTime = `${hours.toString().padStart(2, "0")}:${minutes
+        .toString()
+        .padStart(2, "0")}`;
       // แปลง Day.js เป็น Firebase Timestamp
 
       const newTreatment = {
         vaccine: vaccineDoc.data(), // ใช้ข้อมูลวัคซีนที่ดึงมา
         description: treatmentsdec,
-        nextAppointmentDate: nextAppointmentDate ? nextAppointmentDate : "ไม่มีการนัด",
-        nextTimeAppoinMentDate: formattedTime ? formattedTime : "ไม่มีเวลาการนัด",
+        nextAppointmentDate: nextAppointmentDate
+          ? nextAppointmentDate
+          : "ไม่มีการนัด",
+        nextTimeAppoinMentDate: formattedTime
+          ? formattedTime
+          : "ไม่มีเวลาการนัด",
         DateVaccination: formattedDate,
-        vaccine_dose: vaccine_dose + " โดส", // สร้างวันที่
+        vaccine_dose: vaccine_dose + " โดส",
+        doctorID: GetDoctor.id, // ใช้ .id จาก GetDoctor สำหรับไอดีเอกสารแพทย์
+        doctorName: doctorData.DoctorName || "Unknown Doctor",
+        Animal_Registration_Number: doctorData.Animal_Registration_Number,
+        No_vaccine: No_vaccine, // ตรวจสอบว่ามีชื่อแพทย์ในข้อมูลหรือไม่   // สร้างวันที่
       };
 
       // อัปเดตเอกสารสัตว์เลี้ยงใน Firestore
@@ -510,17 +575,22 @@ const addNEwTreatment = async (petId, vaccineId, treatmentsdec, nextAppointmentD
         // ใส่ doctorID ที่ถูกต้อง
         await addAppointmentInDoctor(petId, doctorID, formattedTime, ownerId); // Pass petId (string) instead of petDocRef
       }
-
     } else {
       console.error("No such vaccine document!"); // ถ้าเอกสารวัคซีนไม่พบ
     }
   } catch (error) {
-    console.error("ไม่สามารถอัพโหลดได้ ", error); // แสดงข้อผิดพลาด
+    console.error("ไม่สามารถอัพโหลดได้ ", error);
+    return message.error("สัตว์เลี้ยงยังไม่มีเจ้าของ");
+    // แสดงข้อผิดพลาด
   }
 };
 
-
-const addAppointmentInDoctor = async (petId, doctorID, formattedTime, ownerId) => {
+const addAppointmentInDoctor = async (
+  petId,
+  doctorID,
+  formattedTime,
+  ownerId
+) => {
   console.log("petID", petId);
   console.log("doctorID", doctorID);
   console.log("ownerID", ownerId);
@@ -532,11 +602,10 @@ const addAppointmentInDoctor = async (petId, doctorID, formattedTime, ownerId) =
     const doctorDocRef = doc(db, "doctorsVen", doctorID); // เอกสารแพทย์
     const ownerDocRef = doc(db, "owners", ownerId); // เอกสารเจ้าของ
 
-
     // ดึงข้อมูลสัตว์เลี้ยงและแพทย์
     const GetDocpet = await getDoc(petDocRef);
     const GetDoctor = await getDoc(doctorDocRef);
-    const GetDocOwner = await getDoc(ownerDocRef)
+    const GetDocOwner = await getDoc(ownerDocRef);
     // ตรวจสอบว่าข้อมูลของสัตว์เลี้ยงและแพทย์มีอยู่
     const petData = GetDocpet.data();
     const doctorData = GetDoctor.data();
@@ -563,14 +632,14 @@ const addAppointmentInDoctor = async (petId, doctorID, formattedTime, ownerId) =
       weight: petData.weight,
       type: petData.type,
       subType: petData.subType,
-      NumberPet: petData.NumberPet
-    }
+      NumberPet: petData.NumberPet,
+    };
     const owners = {
       id: GetDocOwner.id,
       name: ownerData.name,
       lastname: ownerData.lastnameOwner,
-      phone: ownerData.phone
-    }
+      phone: ownerData.phone,
+    };
     // สร้างข้อมูลการนัดหมายใหม่
     const AddAppointMent = {
       owner: arrayUnion(owners),
@@ -581,19 +650,17 @@ const addAppointmentInDoctor = async (petId, doctorID, formattedTime, ownerId) =
       nextAppointmentDate,
       TimeAppoinMentDate: formattedTime,
       status: false, // สถานะการนัดหมาย
-      confirmStats: null
+      confirmStats: null,
     };
 
     const docRef = await addDoc(collection(db, "appointment"), AddAppointMent);
     console.log("Appointment added successfully");
     message.success("การจัดการให้วัคซีนเรียบร้อยแล้ว");
     return docRef.id;
-
   } catch (error) {
     console.error("Error adding appointment: ", error);
   }
 };
-
 
 const addAppointmentInAdmin = async (AddAppointment) => {
   console.log("obj", AddAppointment);
@@ -602,11 +669,10 @@ const addAppointmentInAdmin = async (AddAppointment) => {
     const doctorDocRef = doc(db, "doctorsVen", AddAppointment.doctorID); // เอกสารแพทย์
     const ownerDocRef = doc(db, "owners", AddAppointment.ownerId); // เอกสารเจ้าของ
 
-
     // ดึงข้อมูลสัตว์เลี้ยงและแพทย์
     const GetDocpet = await getDoc(petDocRef);
     const GetDoctor = await getDoc(doctorDocRef);
-    const GetDocOwner = await getDoc(ownerDocRef)
+    const GetDocOwner = await getDoc(ownerDocRef);
     // ตรวจสอบว่าข้อมูลของสัตว์เลี้ยงและแพทย์มีอยู่
     const petData = GetDocpet.data();
     const doctorData = GetDoctor.data();
@@ -619,7 +685,7 @@ const addAppointmentInAdmin = async (AddAppointment) => {
     // ตรวจสอบว่า historytreatments เป็น array และมีข้อมูล
     const historytreatments = petData.historytreatments;
     if (!Array.isArray(historytreatments) || historytreatments.length === 0) {
-      return { message: "No history treatments found for this pet." }
+      return { message: "No history treatments found for this pet." };
     }
 
     // เข้าถึงรายการล่าสุดใน historytreatments
@@ -631,14 +697,14 @@ const addAppointmentInAdmin = async (AddAppointment) => {
       weight: petData.weight,
       type: petData.type,
       subType: petData.subType,
-      NumberPet: petData.NumberPet
-    }
+      NumberPet: petData.NumberPet,
+    };
     const owners = {
       id: GetDocOwner.id,
       name: ownerData.name,
       lastname: ownerData.lastnameOwner,
-      phone: ownerData.phone
-    }
+      phone: ownerData.phone,
+    };
     // สร้างข้อมูลการนัดหมายใหม่
     const AddAppointMent = {
       owner: arrayUnion(owners),
@@ -648,13 +714,12 @@ const addAppointmentInAdmin = async (AddAppointment) => {
       nextAppointmentDate: AddAppointment.nextAppointmentDate,
       TimeAppoinMentDate: AddAppointment.selectedTime,
       status: false,
-      confirmStats: null // สถานะการนัดหมาย
+      confirmStats: null, // สถานะการนัดหมาย
     };
 
     const docRef = await addDoc(collection(db, "appointment"), AddAppointMent);
     console.log("Appointment added successfully");
     return { success: true, id: docRef.id };
-
   } catch (error) {
     console.error("Error adding appointment: ", error); // แสดงข้อผิดพลาด
   }
@@ -662,15 +727,14 @@ const addAppointmentInAdmin = async (AddAppointment) => {
 
 const upDateAppointment = async (apID) => {
   try {
-    const apRef = doc(db, "appointment", apID)
+    const apRef = doc(db, "appointment", apID);
     await updateDoc(apRef, {
-      status: true
-    })
+      status: true,
+    });
   } catch (error) {
     console.error("Error updating document: ", error); // แสดงข้อผิดพลาดถ้ามี
   }
-
-}
+};
 
 const fetchedAddPointMent = async () => {
   try {
@@ -696,10 +760,7 @@ const fetchedAddPointMentBydoctorID = async (doctorID) => {
     const colRef = collection(db, "appointment");
 
     // Create a query to filter by 'doctorID' and order by 'nextAppointmentDate'
-    const q = query(
-      colRef,
-      where("doctorID", "==", doctorID),
-    );
+    const q = query(colRef, where("doctorID", "==", doctorID));
 
     const snapshot = await getDocs(q);
 
@@ -718,7 +779,7 @@ const fetchedAddPointMentBydoctorID = async (doctorID) => {
 const GetAddPointMentBytrue = async () => {
   try {
     const colRef = collection(db, "appointment");
-    const q = query(colRef, where("status", "==", true))
+    const q = query(colRef, where("status", "==", true));
     const snapshot = await getDocs(q);
     const data = snapshot.docs.map((doc) => ({
       id: doc.id,
@@ -727,14 +788,13 @@ const GetAddPointMentBytrue = async () => {
     return data;
   } catch (error) {
     console.log(error, "ไม่พบข้อมูล");
-
   }
-}
+};
 
 const GetAddPointMentByfalse = async () => {
   try {
     const colRef = collection(db, "appointment");
-    const q = query(colRef, where("status", "==", false))
+    const q = query(colRef, where("status", "==", false));
     const snapshot = await getDocs(q);
     const data = snapshot.docs.map((doc) => ({
       id: doc.id,
@@ -744,12 +804,12 @@ const GetAddPointMentByfalse = async () => {
   } catch (error) {
     console.log(error, "ไม่พบข้อมูล");
   }
-}
+};
 
 const GetAddPointMentByCannel = async () => {
   try {
     const colRef = collection(db, "appointment");
-    const q = query(colRef, where("confirmStats", "==", false))
+    const q = query(colRef, where("confirmStats", "==", false));
     const snapshot = await getDocs(q);
     const data = snapshot.docs.map((doc) => ({
       id: doc.id,
@@ -759,7 +819,7 @@ const GetAddPointMentByCannel = async () => {
   } catch (error) {
     console.log(error, "ไม่พบข้อมูล");
   }
-}
+};
 
 const getOwnerByIdpet = async (ownerId) => {
   try {
@@ -774,7 +834,6 @@ const getOwnerByIdpet = async (ownerId) => {
       console.log("ไม่พบข้อมูล"); // Log if no document is found
       return null; // Return null or handle as needed
     }
-
   } catch (error) {
     console.log(error, "ไม่พบข้อมูล");
     return null; // Return null or handle error as needed
@@ -789,7 +848,7 @@ const confirmAppointment = async (appointmentID, confirmStats) => {
 
     // Update the specified field in Firestore
     await updateDoc(appointmentRef, {
-      confirmStats: confirmStats
+      confirmStats: confirmStats,
     });
 
     console.log("Field added/updated successfully");
@@ -798,7 +857,7 @@ const confirmAppointment = async (appointmentID, confirmStats) => {
     console.error("Error adding field to appointment:", error);
     throw error; // Rethrow the error so it can be handled in confirmAddponitment
   }
-}
+};
 
 const updateDoctorInFirebase = async (doctorId, updatedDoctorData, img) => {
   try {
@@ -841,7 +900,6 @@ const updateDoctorInFirebase = async (doctorId, updatedDoctorData, img) => {
   }
 };
 
-// Function to delete a doctor
 const deleteDoctor = async (doctorId) => {
   try {
     const doctorDocRef = doc(db, "doctorsVen", doctorId);
@@ -849,9 +907,13 @@ const deleteDoctor = async (doctorId) => {
 
     if (doctorDoc.exists) {
       const doctorData = doctorDoc.data();
-      const imagePath = doctorData.Medical_license?.split("/doctorImages%2F")[1]?.split("?")[0];
+      const imagePath =
+        doctorData.Medical_license?.split("/doctorImages%2F")[1]?.split("?")[0];
       if (imagePath) {
-        const storageRef = ref(storage, `doctorImages/${decodeURIComponent(imagePath)}`);
+        const storageRef = ref(
+          storage,
+          `doctorImages/${decodeURIComponent(imagePath)}`
+        );
         await deleteObject(storageRef);
       }
     }
@@ -872,10 +934,7 @@ const deleteDoctor = async (doctorId) => {
 const fetchedPetsByID = async (ownerID) => {
   try {
     const colRef = collection(db, "pets");
-    const q = query(
-      colRef,
-      where("ownerId", "==", ownerID)
-    );
+    const q = query(colRef, where("ownerId", "==", ownerID));
     const snapshot = await getDocs(q);
     const data = snapshot.docs.map((doc) => ({
       id: doc.id,
@@ -890,8 +949,34 @@ const fetchedPetsByID = async (ownerID) => {
   }
 };
 
+const calculateAndUpdateAge = async (petId, petData) => {
+  const { years, months, createdAt } = petData;
 
+  const createdDate = createdAt.toDate(); // แปลงเป็นวันที่
+  const now = new Date();
+  const diffYears = now.getFullYear() - createdDate.getFullYear();
+  const diffMonths = now.getMonth() - createdDate.getMonth();
 
+  let updatedYears = years + diffYears;
+  let updatedMonths = months + diffMonths;
+
+  if (updatedMonths >= 12) {
+    updatedYears += Math.floor(updatedMonths / 12);
+    updatedMonths = updatedMonths % 12;
+  } else if (updatedMonths < 0) {
+    updatedYears -= 1;
+    updatedMonths += 12;
+  }
+
+  // อัปเดตอายุใน Firestore
+  const petRef = doc(db, "pets", petId);
+  await updateDoc(petRef, {
+    years: updatedYears,
+    months: updatedMonths,
+  });
+
+  return `${updatedYears} ปี ${updatedMonths} เดือน`;
+};
 
 export {
   AddOwner,

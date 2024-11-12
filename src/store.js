@@ -28,6 +28,7 @@ const useStore = create((set) => ({
     weight: "",
     color: "",
     gender: "",
+    pet_status: ""
   },
   setNewPet: (pet) => set({ newPet: pet }),
 

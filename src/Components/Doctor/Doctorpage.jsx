@@ -24,7 +24,7 @@ import {
 import moment from "moment";
 import dayjs from "dayjs";
 import useStore from "../../store";
-import { render } from "@testing-library/react";
+
 
 const { TabPane } = Tabs;
 const { Option } = Select;
@@ -32,6 +32,7 @@ const { Option } = Select;
 const Doctorpage = () => {
   const [openHistory, setOpenHistory] = useState(false);
   const [vaccineId, setVaccineId] = useState("");
+  const [No_vaccine, setNo_vaccine] = useState("");
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [pets, setPets] = useState([]);
@@ -87,6 +88,7 @@ const Doctorpage = () => {
     };
     loadData();
   }, [getID]);
+  console.log(pets);
 
   useEffect(() => {
     const loadDoctorData = async () => {
@@ -147,7 +149,8 @@ const Doctorpage = () => {
         selectedTime,
         ownerId,
         doctor.id,
-        vaccine_dose
+        vaccine_dose,
+        No_vaccine
       );
       setIsModalVisible(false);
       setSelectedPet({});
@@ -402,10 +405,16 @@ const Doctorpage = () => {
                 },
                 { title: "ประเภท", dataIndex: "type", key: "type" },
                 { title: "สายพันธุ์", dataIndex: "subType", key: "subType" },
-                { title: "เจ้าของ", dataIndex: "ownerName", key: "ownerName" },
+                { title: "เจ้าของ", dataIndex: "owner", key: "owner" },
                 { title: "อายุ (ปี)", dataIndex: "years", key: "years" },
                 { title: "อายุ (เดือน)", dataIndex: "months", key: "months" },
                 { title: "นํ้าหนัก", dataIndex: "weight", key: "weight" },
+                {
+                  title: "สถานะ",
+                  render: (text, record) =>
+                    record.pet_status === "die" ? "เสียชีวิต" : "มีชีวิต",
+                  key: "petstatus",
+                },
                 {
                   title: "ดูประวัติการรักษา",
                   key: "GetTreatment",
@@ -419,7 +428,11 @@ const Doctorpage = () => {
                   title: "การจัดการให้วัคซีน",
                   key: "addTreatment",
                   render: (text, record) => (
-                    <Button type="primary" onClick={() => showModal(record)}>
+                    <Button
+                      type="primary"
+                      disabled={record.pet_status === "die" ? true : false}
+                      onClick={() => showModal(record)}
+                    >
                       เพิ่ม
                     </Button>
                   ),
@@ -455,6 +468,18 @@ const Doctorpage = () => {
                     </Option>
                   ))}
                 </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="vaccineNumber"
+                label="เลขวัคซีน"
+                rules={[{ required: true, message: "กรุณากรอกเลขวัคซีน" }]}
+              >
+                <Input
+                  placeholder="กรอกเลขวัคซีน"
+                  value={No_vaccine}
+                  onChange={(e) => setNo_vaccine(e.target.value)}
+                />
               </Form.Item>
 
               <Form.Item name="notes" label="หมายเหตุ">
@@ -520,10 +545,16 @@ const Doctorpage = () => {
                       การฉีดวัคซีน
                     </th>
                     <th className="px-4 py-2 border border-pink-300">
-                      หมายเลขชุด
+                      หมายเลขชุดวัคซีน
                     </th>
                     <th className="px-4 py-2 border border-pink-300">
                       วันที่ฉีดวัคซีน
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      หมอที่ทำการฉีดวัคซีน
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      เลขที่ใบอนุญาติ
                     </th>
                     <th className="px-4 py-2 border border-pink-300">
                       ปริมาณการฉีดวัคซีน
@@ -533,6 +564,9 @@ const Doctorpage = () => {
                     </th>
                     <th className="px-4 py-2 border border-pink-300">
                       ฉลากวัดคซีน
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      หมายเหตุ
                     </th>
                   </tr>
                 </thead>
@@ -545,14 +579,16 @@ const Doctorpage = () => {
                           {item.vaccine.vaccineName}
                         </td>
                         <td className="px-4 py-2 border border-pink-300">
-                          <img
-                            src={item.batchNo}
-                            alt={`Batch No. ${index + 1}`}
-                            className="w-12 h-12 object-contain"
-                          />
+                          {item.No_vaccine}
                         </td>
                         <td className="px-4 py-2 border border-pink-300">
                           {item.DateVaccination}
+                        </td>
+                        <td className="px-4 py-2 border border-pink-300">
+                          {item.doctorName}
+                        </td>
+                        <td className="px-4 py-2 border border-pink-300">
+                          {item.Animal_Registration_Number}
                         </td>
                         <td className="px-4 py-2 border border-pink-300">
                           {item.vaccine_dose}
@@ -567,11 +603,14 @@ const Doctorpage = () => {
                             className="w-20 h-20 object-contain"
                           />
                         </td>
+                        <td className="px-4 py-2 border border-pink-300">
+                          {item.description}
+                        </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className="text-center">
+                      <td colSpan="5" className="text-center w-full h-[50px]">
                         ไม่มีข้อมูลการรักษา
                       </td>
                     </tr>

@@ -29,6 +29,7 @@ export default function ManageDoctorsVets() {
     email: "",
     password: "",
     phone: "",
+    Animal_Registration_Number: "",
   });
   const [editDoctorId, setEditDoctorId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -131,12 +132,17 @@ export default function ManageDoctorsVets() {
   }, []);
 
   const options = [
-    { value: "สัตวแพทย์ชาย", label: "สัตวแพทย์ชาย" },
-    { value: "สัตวแพทย์หญิง", label: "สัตวแพทย์หญิง" },
+    { value: "สพ.ญ.", label: "สพ.ญ.(สัตวแพทย์หญิง)" },
+    { value: "น.สพ.", label: "น.สพ.(นายสัตว์แพทย์)" },
   ];
 
   // Columns for the antd Table
   const columns = [
+    {
+      title: "คำนำหน้า",
+      dataIndex: "Prefix",
+      key: "Prefix",
+    },
     {
       title: "ชื่อหมอ",
       dataIndex: "DoctorName",
@@ -176,6 +182,11 @@ export default function ManageDoctorsVets() {
         ) : (
           <span>No Image</span>
         ),
+    },
+    {
+      title: "เลขใบประกอบวิชาชีพ",
+      dataIndex: "Animal_Registration_Number",
+      key: "Animal_Registration_Number",
     },
     {
       title: "การจัดการ",
@@ -256,7 +267,7 @@ export default function ManageDoctorsVets() {
         <Select
           placeholder="เลือกคำนำหน้า"
           className="w-full mb-4"
-          value={newDoctor.Prefix}
+          value={newDoctor.Prefix || undefined}
           onChange={(value) => setNewDoctor({ ...newDoctor, Prefix: value })}
         >
           {options.map((option) => (
@@ -305,6 +316,17 @@ export default function ManageDoctorsVets() {
           value={newDoctor.phone}
           onChange={(e) =>
             setNewDoctor({ ...newDoctor, phone: e.target.value })
+          }
+        />
+        <Input
+          placeholder="เลขบัตรอนุญาติวิชาชีพ"
+          className="mb-4"
+          value={newDoctor.Animal_Registration_Number}
+          onChange={(e) =>
+            setNewDoctor({
+              ...newDoctor,
+              Animal_Registration_Number: e.target.value,
+            })
           }
         />
         <Upload
