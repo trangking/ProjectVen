@@ -155,6 +155,7 @@ const AddOwner = async (
       petIds: selectedPetIds,
       roleType: "user",
       createdAt: serverTimestamp(),
+      accountLine: {}
     };
 
     // เพิ่มเจ้าของใหม่ในคอลเล็กชัน owners
@@ -940,8 +941,6 @@ const fetchedPetsByID = async (ownerID) => {
       id: doc.id,
       ...doc.data(),
     }));
-    console.log(data);
-
     return data;
   } catch (error) {
     console.error("Error fetching pets by owner ID:", error);
@@ -978,6 +977,18 @@ const calculateAndUpdateAge = async (petId, petData) => {
   return `${updatedYears} ปี ${updatedMonths} เดือน`;
 };
 
+const insetAccountLineInfirebase = async (ownerID, profile) => {
+  console.log(ownerID);
+  console.log(profile);
+
+
+  const ownerDocRef = doc(db, "owners", ownerID);
+  await updateDoc(ownerDocRef, {
+    accountLine: profile
+  })
+  return message.success("สมัครสำเร็จ")
+}
+
 export {
   AddOwner,
   addPetToFirebase,
@@ -1007,6 +1018,8 @@ export {
   confirmAppointment,
   updateDoctorInFirebase,
   deleteDoctor,
+  fetchedOwnerByID,
+  insetAccountLineInfirebase,
   auth,
   db,
   storage,

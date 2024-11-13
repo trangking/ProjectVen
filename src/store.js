@@ -64,6 +64,7 @@ const useStore = create((set) => ({
   logout: () => {
     localStorage.removeItem("Id");
     localStorage.removeItem("token");
+    localStorage.clear()
     set({ token: "" }); // เคลียร์ token ใน zustand ด้วย
     console.log("Logged out successfully");
   },
