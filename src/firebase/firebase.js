@@ -32,6 +32,7 @@ import {
 } from "firebase/storage";
 import { v4 } from "uuid";
 import { message } from "antd";
+import axios from "axios";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCB_tQwjnuTKgla0sZwnu_Q__zYYiOPBRE",
@@ -656,8 +657,9 @@ const addAppointmentInDoctor = async (
 
     const docRef = await addDoc(collection(db, "appointment"), AddAppointMent);
     console.log("Appointment added successfully");
-    message.success("การจัดการให้วัคซีนเรียบร้อยแล้ว");
-    return docRef.id;
+    await sendAppointMentInLine(ownerData.accountLine.userId, nextAppointmentDate, petData.name)
+    return message.success("การจัดการให้วัคซีนเรียบร้อยแล้ว"), docRef.id;
+
   } catch (error) {
     console.error("Error adding appointment: ", error);
   }
@@ -987,6 +989,23 @@ const insetAccountLineInfirebase = async (ownerID, profile) => {
     accountLine: profile
   })
   return message.success("สมัครสำเร็จ")
+}
+
+const sendAppointMentInLine = (userId, nextAppointmentDate, petName) => {
+  console.log("userId line :", userId);
+  console.log("nextap  :", nextAppointmentDate);
+  try {
+    if (!userId || !nextAppointmentDate) {
+      return message.error("ไม่สามารถนัดหมายได้ เนื่องจากลูกค้าไม่ได้มีการเพิ่มเพื่อนทางไลร์")
+    }
+    axios.post("https://sentmessageappointmentline-production.up.railway.app/send", {
+      userId: userId,
+      message: `📅 ${nextAppointmentDate} มีการนัดของน้อง 🐇${petName}`,
+    })
+    return message.success("ส่งข้อความไปทางไลร์แล้ว")
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 export {

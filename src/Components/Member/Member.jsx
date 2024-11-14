@@ -36,6 +36,34 @@ export default function PetCards() {
   const [modal2Open, setModal2Open] = useState(false);
   const [urlPicture, seturlPicture] = useState(null);
 
+  useEffect(() => {
+    const initializeLiff = async () => {
+      try {
+        // Open modal if accountLine is empty, close if it exists
+        setModal2Open(
+          !owner.accountLine || Object.keys(owner.accountLine).length === 0
+        );
+
+        // Initialize LIFF with liffId
+        await liff.init({ liffId: "2006562622-GXpWdRRO" });
+
+        // Check if logged in and accountLine is empty, then fetch profile and save it
+        if (
+          liff.isLoggedIn() &&
+          (!owner.accountLine || Object.keys(owner.accountLine).length === 0)
+        ) {
+          const profile = await liff.getProfile();
+          await insetAccountLineInfirebase(ownerId, profile);
+          setModal2Open(false); // Close modal after updating Firebase
+        }
+      } catch (err) {
+        console.log("Error during LIFF initialization or login:", err);
+      }
+    };
+
+    initializeLiff();
+  }, [owner.accountLine, ownerId]);
+
   const handleViewHistory = (pet) => {
     setSelectedPet(pet);
     setShowModal(true);
@@ -78,28 +106,6 @@ export default function PetCards() {
     };
     loadData();
   }, []);
-
-  useEffect(() => {
-    const initializeLiff = async () => {
-      try {
-        await liff.init({ liffId: "2006562622-GXpWdRRO" });
-        if (
-          liff.isLoggedIn() &&
-          (!owner.accountLine || Object.keys(owner.accountLine).length === 0)
-        ) {
-          const profile = await liff.getProfile();
-          await insetAccountLineInfirebase(ownerId, profile);
-          setModal2Open(false);
-        } else if (!liff.isLoggedIn()) {
-          setModal2Open(true);
-        }
-      } catch (err) {
-        console.log("Error during LIFF initialization or login:", err);
-      }
-    };
-
-    initializeLiff();
-  }, [owner?.accountLine]);
 
   const handleLoginLine = async () => {
     try {
@@ -195,26 +201,86 @@ export default function PetCards() {
         >
           {/* Table inside Modal */}
           <div className="bg-pink-100 rounded-lg p-6">
-            <table className="min-w-full table-auto border-collapse border border-pink-200">
-              <thead>
-                <tr className="bg-pink-200">{/* Define table headers */}</tr>
-              </thead>
-              <tbody>
-                {Array.isArray(selectedPet?.historytreatments) &&
-                selectedPet.historytreatments.length > 0 ? (
-                  selectedPet.historytreatments.map((item, index) => (
-                    <tr key={index}>{/* Define table data cells */}</tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="5" className="text-center w-full h-[50px]">
-                      ไม่มีข้อมูลการรักษา
-                    </td>
+              <table className="min-w-full table-auto border-collapse border border-pink-200">
+                <thead>
+                  <tr className="bg-pink-200">
+                    <th className="px-4 py-2 border border-pink-300">
+                      การฉีดวัคซีน
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      หมายเลขชุดวัคซีน
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      วันที่ฉีดวัคซีน
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      หมอที่ทำการฉีดวัคซีน
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      เลขที่ใบอนุญาติ
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      ปริมาณการฉีดวัคซีน
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      นัดครั้งถัดไป
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      ฉลากวัดคซีน
+                    </th>
+                    <th className="px-4 py-2 border border-pink-300">
+                      หมายเหตุ
+                    </th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {Array.isArray(selectedPet?.historytreatments) &&
+                  selectedPet.historytreatments.length > 0 ? (
+                    selectedPet.historytreatments.map((item, index) => (
+                      <tr key={index}>
+                        <td className="px-4 py-2 border border-pink-300">
+                          {item.vaccine.vaccineName}
+                        </td>
+                        <td className="px-4 py-2 border border-pink-300">
+                          {item.No_vaccine}
+                        </td>
+                        <td className="px-4 py-2 border border-pink-300">
+                          {item.DateVaccination}
+                        </td>
+                        <td className="px-4 py-2 border border-pink-300">
+                          {item.doctorName}
+                        </td>
+                        <td className="px-4 py-2 border border-pink-300">
+                          {item.Animal_Registration_Number}
+                        </td>
+                        <td className="px-4 py-2 border border-pink-300">
+                          {item.vaccine_dose}
+                        </td>
+                        <td className="px-4 py-2 border border-pink-300">
+                          {item.nextAppointmentDate}
+                        </td>
+                        <td className="px-4 py-2 border border-pink-300 flex justify-center">
+                          <img
+                            src={item.vaccine.vaccineImage}
+                            alt={`Sticker for ${item.vaccine.vaccineImage}`}
+                            className="w-20 h-20 object-contain"
+                          />
+                        </td>
+                        <td className="px-4 py-2 border border-pink-300">
+                          {item.description}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="text-center w-full h-[50px]">
+                        ไม่มีข้อมูลการรักษา
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
         </Modal>
 
         {/* Modal for LINE Registration */}
@@ -258,7 +324,20 @@ export default function PetCards() {
                 height={150}
                 className="rounded-md border border-gray-200 mb-4"
               />
-              <a href="https://lin.ee/qTJxijq"><img src="https://scdn.line-apps.com/n/line_add_friends/btn/th.png" alt="เพิ่มเพื่อน" height="36" border="0"/></a>
+
+              <h1 style={{ color: "#7f8c8d" }}>หรือ</h1>
+              <Link
+                to="https://lin.ee/qTJxijq"
+                className="w-full items-center justify-center flex"
+              >
+                <img
+                  src="https://scdn.line-apps.com/n/line_add_friends/btn/th.png"
+                  alt="เพิ่มเพื่อน"
+                  height="20"
+                  border="0"
+                  className="w-[10.25rem] h-[3.25rem]"
+                />
+              </Link>
             </div>
 
             {/* Step 2: Login */}

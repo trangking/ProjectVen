@@ -25,7 +25,6 @@ import moment from "moment";
 import dayjs from "dayjs";
 import useStore from "../../store";
 
-
 const { TabPane } = Tabs;
 const { Option } = Select;
 
@@ -88,7 +87,6 @@ const Doctorpage = () => {
     };
     loadData();
   }, [getID]);
-  console.log(pets);
 
   useEffect(() => {
     const loadDoctorData = async () => {
@@ -105,6 +103,14 @@ const Doctorpage = () => {
     setSelectedPet(record);
     setIsModalVisible(true);
     setOwnerId(record.ownerId);
+    form.setFieldsValue({
+      vaccine: "",
+      vaccineNumber: "",
+      notes: "",
+      vaccine_dose: "",
+      nextAppointmentDate: null,
+      nextAppointmentTime: null,
+    });
   };
 
   const showModaladdtreatment = (record) => {
@@ -174,7 +180,7 @@ const Doctorpage = () => {
     setTreatmentsdec("");
     setNextAppointmentDate(null);
     setSelectedTime(null);
-    form.resetFields();
+    form.resetFields(); // เรียก resetFields เป็นตัวสุดท้าย
   };
 
   const handleTimeChange = (time) => {
@@ -503,7 +509,7 @@ const Doctorpage = () => {
                 />
               </Form.Item>
 
-              <Form.Item label="วันนัดครั้งถัดไป">
+              <Form.Item name="nextAppointmentDate" label="วันนัดครั้งถัดไป">
                 <DatePicker
                   defaultValue={
                     nextAppointmentDate ? moment(nextAppointmentDate) : null
@@ -515,7 +521,7 @@ const Doctorpage = () => {
                   placeholder="เลือกวันนัดครั้งถัดไป"
                 />
               </Form.Item>
-              <Form.Item>
+              <Form.Item name="nextAppointmentTime">
                 <div className="flex flex-col">
                   <label>เวลานัดครั้งถัดไป</label>
                   <TimePicker

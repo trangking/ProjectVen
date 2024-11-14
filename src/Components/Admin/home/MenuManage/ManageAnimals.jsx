@@ -100,7 +100,6 @@ export default function ManageAnimals() {
     setLoading(false);
     closeModal();
   };
-  console.log(pets);
 
   const columns = [
     {
