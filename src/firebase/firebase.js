@@ -654,12 +654,10 @@ const addAppointmentInDoctor = async (
       status: false, // สถานะการนัดหมาย
       confirmStats: null,
     };
-
-    const docRef = await addDoc(collection(db, "appointment"), AddAppointMent);
+    await addDoc(collection(db, "appointment"), AddAppointMent);
     console.log("Appointment added successfully");
     await sendAppointMentInLine(ownerData.accountLine.userId, nextAppointmentDate, petData.name)
-    return message.success("การจัดการให้วัคซีนเรียบร้อยแล้ว"), docRef.id;
-
+    return message.success("การจัดการให้วัคซีนเรียบร้อยแล้ว")
   } catch (error) {
     console.error("Error adding appointment: ", error);
   }
@@ -690,10 +688,6 @@ const addAppointmentInAdmin = async (AddAppointment) => {
     if (!Array.isArray(historytreatments) || historytreatments.length === 0) {
       return { message: "No history treatments found for this pet." };
     }
-
-    // เข้าถึงรายการล่าสุดใน historytreatments
-    const latestTreatment = historytreatments[historytreatments.length - 1];
-    // ตรวจสอบว่ามี nextAppointmentDate หรือไม่ในรายการล่าสุด
     const pets = {
       id: GetDocpet.id,
       name: petData.name,

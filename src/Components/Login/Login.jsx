@@ -1,42 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth"; // import Firebase authentication
-import { auth, fecthOwners, fetchedDoctors, db } from "../../firebase/firebase"; // นำเข้า auth จาก Firebase
+import { auth, db } from "../../firebase/firebase"; // นำเข้า auth จาก Firebase
 import useStore from "../../store"; // import useStore
 import { doc, getDoc } from "firebase/firestore";
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const [bgSize, setBgSize] = useState("");
-  const [bgPosition, setBgPosition] = useState("");
   const email = useStore((state) => state.email);
   const password = useStore((state) => state.password);
   const setEmail = useStore((state) => state.setEmail);
   const setPassword = useStore((state) => state.setPassword);
-  const [dataUser, setdataUser] = useState([]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth <= 640) {
-        setBgSize("175% 100%");
-        setBgPosition("38% 47%");
-      } else {
-        setBgSize("112% 144%");
-        setBgPosition("15% 47%");
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    handleResize(); // Call once to set initial value
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
-
   const checkLogin = async (event) => {
     event.preventDefault();
     try {
@@ -147,9 +125,10 @@ function Login() {
             <input type="checkbox" className="w-4 h-4" />
             <span className="text-sm text-gray-600">Remember me</span>
           </label>
-          <a href="#" className="text-sm text-blue-500 hover:underline">
+          
+          {/* <a href="#" className="text-sm text-blue-500 hover:underline">
             Forgot Password?
-          </a>
+          </a> */}
         </div>
 
         <button
@@ -161,9 +140,9 @@ function Login() {
 
         <p className="text-center mt-6 text-gray-600">
           Don't have an account?{" "}
-          <a href="#" className="text-blue-500 font-medium hover:underline">
+          {/* <a href="#" className="text-blue-500 font-medium hover:underline">
             Register
-          </a>
+          </a> */}
         </p>
       </form>
     </div>

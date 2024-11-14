@@ -17,7 +17,7 @@ import {
   Image,
 } from "antd";
 import useStore from "../../store";
-import { MenuOutlined, LineOutlined } from "@ant-design/icons";
+import { MenuOutlined } from "@ant-design/icons";
 import liff from "@line/liff";
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
@@ -105,7 +105,7 @@ export default function PetCards() {
       setLoading(false);
     };
     loadData();
-  }, []);
+  }, [ownerId]);
 
   const handleLoginLine = async () => {
     try {
@@ -201,86 +201,84 @@ export default function PetCards() {
         >
           {/* Table inside Modal */}
           <div className="bg-pink-100 rounded-lg p-6">
-              <table className="min-w-full table-auto border-collapse border border-pink-200">
-                <thead>
-                  <tr className="bg-pink-200">
-                    <th className="px-4 py-2 border border-pink-300">
-                      การฉีดวัคซีน
-                    </th>
-                    <th className="px-4 py-2 border border-pink-300">
-                      หมายเลขชุดวัคซีน
-                    </th>
-                    <th className="px-4 py-2 border border-pink-300">
-                      วันที่ฉีดวัคซีน
-                    </th>
-                    <th className="px-4 py-2 border border-pink-300">
-                      หมอที่ทำการฉีดวัคซีน
-                    </th>
-                    <th className="px-4 py-2 border border-pink-300">
-                      เลขที่ใบอนุญาติ
-                    </th>
-                    <th className="px-4 py-2 border border-pink-300">
-                      ปริมาณการฉีดวัคซีน
-                    </th>
-                    <th className="px-4 py-2 border border-pink-300">
-                      นัดครั้งถัดไป
-                    </th>
-                    <th className="px-4 py-2 border border-pink-300">
-                      ฉลากวัดคซีน
-                    </th>
-                    <th className="px-4 py-2 border border-pink-300">
-                      หมายเหตุ
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Array.isArray(selectedPet?.historytreatments) &&
-                  selectedPet.historytreatments.length > 0 ? (
-                    selectedPet.historytreatments.map((item, index) => (
-                      <tr key={index}>
-                        <td className="px-4 py-2 border border-pink-300">
-                          {item.vaccine.vaccineName}
-                        </td>
-                        <td className="px-4 py-2 border border-pink-300">
-                          {item.No_vaccine}
-                        </td>
-                        <td className="px-4 py-2 border border-pink-300">
-                          {item.DateVaccination}
-                        </td>
-                        <td className="px-4 py-2 border border-pink-300">
-                          {item.doctorName}
-                        </td>
-                        <td className="px-4 py-2 border border-pink-300">
-                          {item.Animal_Registration_Number}
-                        </td>
-                        <td className="px-4 py-2 border border-pink-300">
-                          {item.vaccine_dose}
-                        </td>
-                        <td className="px-4 py-2 border border-pink-300">
-                          {item.nextAppointmentDate}
-                        </td>
-                        <td className="px-4 py-2 border border-pink-300 flex justify-center">
-                          <img
-                            src={item.vaccine.vaccineImage}
-                            alt={`Sticker for ${item.vaccine.vaccineImage}`}
-                            className="w-20 h-20 object-contain"
-                          />
-                        </td>
-                        <td className="px-4 py-2 border border-pink-300">
-                          {item.description}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="5" className="text-center w-full h-[50px]">
-                        ไม่มีข้อมูลการรักษา
+            <table className="min-w-full table-auto border-collapse border border-pink-200">
+              <thead>
+                <tr className="bg-pink-200">
+                  <th className="px-4 py-2 border border-pink-300">
+                    การฉีดวัคซีน
+                  </th>
+                  <th className="px-4 py-2 border border-pink-300">
+                    หมายเลขชุดวัคซีน
+                  </th>
+                  <th className="px-4 py-2 border border-pink-300">
+                    วันที่ฉีดวัคซีน
+                  </th>
+                  <th className="px-4 py-2 border border-pink-300">
+                    หมอที่ทำการฉีดวัคซีน
+                  </th>
+                  <th className="px-4 py-2 border border-pink-300">
+                    เลขที่ใบอนุญาติ
+                  </th>
+                  <th className="px-4 py-2 border border-pink-300">
+                    ปริมาณการฉีดวัคซีน
+                  </th>
+                  <th className="px-4 py-2 border border-pink-300">
+                    นัดครั้งถัดไป
+                  </th>
+                  <th className="px-4 py-2 border border-pink-300">
+                    ฉลากวัดคซีน
+                  </th>
+                  <th className="px-4 py-2 border border-pink-300">หมายเหตุ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.isArray(selectedPet?.historytreatments) &&
+                selectedPet.historytreatments.length > 0 ? (
+                  selectedPet.historytreatments.map((item, index) => (
+                    <tr key={index}>
+                      <td className="px-4 py-2 border border-pink-300">
+                        {item.vaccine.vaccineName}
+                      </td>
+                      <td className="px-4 py-2 border border-pink-300">
+                        {item.No_vaccine}
+                      </td>
+                      <td className="px-4 py-2 border border-pink-300">
+                        {item.DateVaccination}
+                      </td>
+                      <td className="px-4 py-2 border border-pink-300">
+                        {item.doctorName}
+                      </td>
+                      <td className="px-4 py-2 border border-pink-300">
+                        {item.Animal_Registration_Number}
+                      </td>
+                      <td className="px-4 py-2 border border-pink-300">
+                        {item.vaccine_dose}
+                      </td>
+                      <td className="px-4 py-2 border border-pink-300">
+                        {item.nextAppointmentDate}
+                      </td>
+                      <td className="px-4 py-2 border border-pink-300 flex justify-center">
+                        <img
+                          src={item.vaccine.vaccineImage}
+                          alt={`Sticker for ${item.vaccine.vaccineImage}`}
+                          className="w-20 h-20 object-contain"
+                        />
+                      </td>
+                      <td className="px-4 py-2 border border-pink-300">
+                        {item.description}
                       </td>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="text-center w-full h-[50px]">
+                      ไม่มีข้อมูลการรักษา
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </Modal>
 
         {/* Modal for LINE Registration */}

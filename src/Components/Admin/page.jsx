@@ -3,8 +3,6 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   CalendarIcon,
   UserGroupIcon,
-  CogIcon,
-  BellIcon,
   MenuIcon,
 } from "@heroicons/react/outline";
 import { Outlet } from "react-router-dom";

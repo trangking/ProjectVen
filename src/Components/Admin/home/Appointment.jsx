@@ -22,7 +22,6 @@ const { Option } = Select;
 export default function AppointmentForm() {
   const [pets, setPets] = useState([]);
   const [doctors, setDoctors] = useState([]);
-  const [showOwners, setshowOwners] = useState([]);
   const [form] = Form.useForm();
   const [AddAppointment, setAddAppointment] = useState({
     petId: "",
@@ -106,7 +105,7 @@ export default function AppointmentForm() {
       <Card className="min-h-auto flex w-1/2 bg-white p-8 rounded-l-2xl justify-center">
         <div className="w-full max-w-lg mx-auto flex flex-col">
           <h1 className="text-5xl font-bold text-center mb-8 text-teal-600">
-            นัดหมายสัตว์เลี้ยง {showOwners.name}
+            นัดหมายสัตว์เลี้ยง
           </h1>
 
           {/* Form */}

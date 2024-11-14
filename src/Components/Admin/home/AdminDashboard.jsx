@@ -13,11 +13,10 @@ import {
   Card,
   Statistic,
   message,
-  Select,
   Spin,
 } from "antd";
 
-const { Option } = Select;
+
 
 export default function AdminDashboard() {
   const [searchTermPet, setSearchTermPet] = useState("");
@@ -28,8 +27,6 @@ export default function AdminDashboard() {
   const [appointmentfalse, setappointmentfalse] = useState([]);
   const [appointmentCanel, setappointmentCanel] = useState([]);
   const [AppointmentsType, setAppointmentsType] = useState("ดูการนัดทั้งหมด");
-  const [confirmStatus, setconfirmStatus] = useState(false);
-  const [TypeconfirmStatus, setTypeconfirmStatus] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {

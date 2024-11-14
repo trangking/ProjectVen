@@ -53,7 +53,6 @@ const Doctorpage = () => {
   const [vaccine_dose, setvaccine_dose] = useState("");
   const logout = useStore((state) => state.logout);
   const [searchText, setSearchText] = useState("");
-  const [searchTextap, setSearchTextap] = useState("");
   const [filteredPets, setFilteredPets] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -70,7 +69,7 @@ const Doctorpage = () => {
     }, 3600000);
 
     return () => clearTimeout(timer);
-  }, [token, navigate]);
+  }, [token, navigate, doctor]);
 
   useEffect(() => {
     const loadData = async () => {

@@ -221,7 +221,16 @@ function EditOwnerModal({
       setAddressMember(selectedOwner.address || "");
       setSelectedPetIds(selectedOwner.petIds || []);
     }
-  }, [editIndex]);
+  }, [
+    editIndex,
+    owners,
+    setfirstName,
+    setLastnameOwner,
+    setEmailMember,
+    setPhoneMember,
+    setAddressMember,
+    setSelectedPetIds,
+  ]);
 
   const handleUpdateOwner = async () => {
     if (!firstName || !lastnameOwner || !addEmailMember || !addPhoneMember)

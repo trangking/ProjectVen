@@ -16,8 +16,7 @@ export default function ManageAnimals() {
   const newPet = useStore((state) => state.newPet);
   const setNewPet = useStore((state) => state.setNewPet);
   const resetNewPet = useStore((state) => state.resetNewPet);
-  const pets = useStore((state) => state.pets);
-  const setPets = useStore((state) => state.setPets);
+  const [pets, setPets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editIndex, setEditIndex] = useState(null);

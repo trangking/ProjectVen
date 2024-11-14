@@ -14,7 +14,6 @@ import {
   Input,
   Spin,
   Table,
-  Pagination,
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 
@@ -213,10 +212,6 @@ export default function ManageDoctorsVets() {
   ];
 
   // Data for pagination
-  const paginatedDoctors = doctors.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
 
   const handleTableChange = (pagination) => {
     setCurrentPage(pagination.current);
