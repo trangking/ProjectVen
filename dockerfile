@@ -1,29 +1,26 @@
-# ใช้ Node.js image เวอร์ชัน 18
+# Stage 1: Build React application
 FROM node:18 AS builder
 
-# กำหนดโฟลเดอร์ทำงาน
+# Set working directory
 WORKDIR /app
 
-# คัดลอกไฟล์ทั้งหมดไปยัง container
+# Copy files to the container
 COPY . .
 
-# ติดตั้ง dependencies
+# Install dependencies
 RUN npm install
 
-# Build แอปสำหรับ production
+# Build the application
 RUN npm run build
 
-# ใช้ Nginx เพื่อเสิร์ฟไฟล์ static
+# Stage 2: Serve using Nginx
 FROM nginx:alpine
 
-# คัดลอกไฟล์ build ไปยัง Nginx directory
+# Copy the build output to Nginx's web directory
 COPY --from=builder /app/build /usr/share/nginx/html
 
-# คัดลอกไฟล์ Nginx configuration ถ้ามี
-COPY nginx.conf /etc/nginx/nginx.conf
-
-# เปิดพอร์ต 80
+# Expose port 80
 EXPOSE 80
 
-# เริ่ม Nginx
+# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
