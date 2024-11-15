@@ -2,12 +2,18 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import liff from "@line/liff";
-import { db } from "../../firebase/firebase";
+import {
+  db,
+  fetchedOwnerByID,
+  insetAccountLineInfirebase,
+} from "../../firebase/firebase";
 import { message } from "antd";
 
 export default function LoadingLine() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const OwnerID = localStorage.getItem("OwnerID");
+  console.log(OwnerID);
 
   const initializeLiff = async () => {
     try {
@@ -48,7 +54,6 @@ export default function LoadingLine() {
           navigate("/member");
         });
       } else {
-        // ส่งกลับหน้าเดิม
         navigate("/");
         localStorage.clear();
         message.error("ท่านยังไม่ได้ลงทะเบียน Line กรุณาติดต่อพนักงาน");
@@ -58,8 +63,34 @@ export default function LoadingLine() {
     }
   };
 
+  const initializeLiffRegister = async () => {
+    try {
+      const ownerData = await fetchedOwnerByID(OwnerID);
+      if (
+        !ownerData.accountLine ||
+        Object.keys(ownerData.accountLine).length === 0
+      ) {
+        await liff.init({ liffId: "2006562622-GXpWdRRO" });
+
+        if (!liff.isLoggedIn()) {
+          liff.login(); // เรียก login
+        }
+
+        const profile = await liff.getProfile(); // รับข้อมูลโปรไฟล์
+        await insetAccountLineInfirebase(OwnerID, profile); // อัปเดต Firebase
+        navigate("/member"); // ไปยังหน้าหลัก
+      }
+    } catch (err) {
+      console.log("Error during LIFF initialization or login:", err);
+    }
+  };
+
   useEffect(() => {
-    initializeLiff();
+    if (OwnerID) {
+      initializeLiffRegister();
+    } else {
+      initializeLiff();
+    }
   }, []);
 
   return (

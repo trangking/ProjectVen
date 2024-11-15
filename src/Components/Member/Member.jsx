@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  fetchedPetsByID,
-  fetchedOwnerByID,
-  insetAccountLineInfirebase,
-} from "../../firebase/firebase";
+import { fetchedPetsByID, fetchedOwnerByID } from "../../firebase/firebase";
 import {
   Table,
   Button,
@@ -18,7 +14,6 @@ import {
 } from "antd";
 import useStore from "../../store";
 import { MenuOutlined } from "@ant-design/icons";
-import liff from "@line/liff";
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
 
@@ -88,12 +83,6 @@ export default function PetCards() {
           Object.keys(ownerData.accountLine).length === 0
         ) {
           setModal2Open(true);
-          await liff.init({ liffId: "2006562622-GXpWdRRO" });
-          if (liff.isLoggedIn()) {
-            const profile = await liff.getProfile();
-            await insetAccountLineInfirebase(ownerId, profile);
-            setModal2Open(false); // Close modal
-          }
         } else {
           setModal2Open(false);
         }
@@ -106,12 +95,8 @@ export default function PetCards() {
   }, [ownerId]);
 
   const handleLoginLine = async () => {
-    try {
-      await liff.init({ liffId: "2006562622-GXpWdRRO" });
-      liff.login();
-    } catch (err) {
-      console.log("Error during LINE login:", err);
-    }
+    navigate("/loading");
+    localStorage.setItem("OwnerID", ownerId);
   };
 
   const columns = [
