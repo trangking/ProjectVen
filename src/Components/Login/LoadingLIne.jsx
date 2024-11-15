@@ -48,6 +48,7 @@ export default function LoadingLine() {
           navigate("/member");
         });
       } else {
+                // ส่งกลับหน้าเดิม
         navigate("/");
         localStorage.clear();
         message.error("ท่านยังไม่ได้ลงทะเบียน Line กรุณาติดต่อพนักงาน");
