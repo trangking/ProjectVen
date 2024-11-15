@@ -289,7 +289,13 @@ const Doctorpage = () => {
                   <Button type="primary">เพิ่มการนัดหมาย</Button>
                 </Link>
                 <Link to={"/"} className=" ml-4">
-                  <Button className=" bg-[#f50] text-white" onClick={logout}>
+                  <Button
+                    className=" bg-[#f50] text-white"
+                    onClick={() => {
+                      logout();
+                      navigate("/");
+                    }}
+                  >
                     ออกจากระบบ
                   </Button>
                 </Link>
