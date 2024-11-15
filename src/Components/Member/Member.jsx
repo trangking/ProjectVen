@@ -15,7 +15,6 @@ import {
   Typography,
   Drawer,
   Image,
-  message,
 } from "antd";
 import useStore from "../../store";
 import { MenuOutlined } from "@ant-design/icons";
