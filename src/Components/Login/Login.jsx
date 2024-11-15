@@ -26,14 +26,13 @@ function Login() {
         password
       );
       const userId = userCredential.user.uid;
-      console.log(userId);
+
       if (userId === "LR4qbzCjoOcNZ0fmc6j1WjKHI9D2") {
         const tokenResult = await userCredential.user.getIdTokenResult();
         const token = tokenResult.token;
         localStorage.setItem("token", token);
-        console.log("Token ถูกบันทึกลงใน localStorage:", token);
+
         localStorage.setItem("Id", userId);
-        console.log(userId);
 
         navigate("/pageAdmin"); // ถ้าเป็นแอดมินให้ไปที่หน้า Admin
       } else {
@@ -65,7 +64,6 @@ function Login() {
 
         // บันทึก token ลงใน localStorage
         localStorage.setItem("token", token);
-        console.log("Token ถูกบันทึกลงใน localStorage:", token);
         localStorage.setItem("Id", userId);
       }
       // Check both collections for the user’s document

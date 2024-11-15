@@ -35,6 +35,7 @@ export default function PetCards() {
   const [owner, setowner] = useState([]);
   const [modal2Open, setModal2Open] = useState(false);
   const [urlPicture, seturlPicture] = useState(null);
+
   const handleViewHistory = (pet) => {
     setSelectedPet(pet);
     setShowModal(true);
@@ -82,20 +83,19 @@ export default function PetCards() {
     const initializeLiff = async () => {
       try {
         const ownerData = await fetchedOwnerByID(ownerId);
-        console.log(ownerData);
         if (
-          ownerData.accountLine ||
+          !ownerData.accountLine ||
           Object.keys(ownerData.accountLine).length === 0
         ) {
-          setModal2Open(false);
-        } else {
-          if (!liff.isLoggedIn()) {
-            await liff.init({ liffId: "2006562622-GXpWdRRO" });
-            setModal2Open(true); // Open modal
-            const profile = await liff.getProfile(); // Get profile from LINE
-            await insetAccountLineInfirebase(ownerId, profile); // Save to Firebase
+          setModal2Open(true);
+          await liff.init({ liffId: "2006562622-GXpWdRRO" });
+          if (liff.isLoggedIn()) {
+            const profile = await liff.getProfile();
+            await insetAccountLineInfirebase(ownerId, profile);
             setModal2Open(false); // Close modal
           }
+        } else {
+          setModal2Open(false);
         }
       } catch (err) {
         console.log("Error during LIFF initialization or login:", err);
