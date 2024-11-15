@@ -2,6 +2,7 @@
   "name": "doctoranime",
   "version": "0.1.0",
   "private": true,
+  "homepage": "/",
   "dependencies": {
     "@ant-design/icons": "^5.5.1",
     "@heroicons/react": "^1.0.6",

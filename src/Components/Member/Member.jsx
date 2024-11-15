@@ -15,6 +15,7 @@ import {
   Typography,
   Drawer,
   Image,
+  message,
 } from "antd";
 import useStore from "../../store";
 import { MenuOutlined } from "@ant-design/icons";
@@ -35,35 +36,6 @@ export default function PetCards() {
   const [owner, setowner] = useState([]);
   const [modal2Open, setModal2Open] = useState(false);
   const [urlPicture, seturlPicture] = useState(null);
-
-  useEffect(() => {
-    const initializeLiff = async () => {
-      try {
-        // Open modal if accountLine is empty, close if it exists
-        setModal2Open(
-          !owner.accountLine || Object.keys(owner.accountLine).length === 0
-        );
-
-        // Initialize LIFF with liffId
-        await liff.init({ liffId: "2006562622-GXpWdRRO" });
-
-        // Check if logged in and accountLine is empty, then fetch profile and save it
-        if (
-          liff.isLoggedIn() &&
-          (!owner.accountLine || Object.keys(owner.accountLine).length === 0)
-        ) {
-          const profile = await liff.getProfile();
-          await insetAccountLineInfirebase(ownerId, profile);
-          setModal2Open(false); // Close modal after updating Firebase
-        }
-      } catch (err) {
-        console.log("Error during LIFF initialization or login:", err);
-      }
-    };
-
-    initializeLiff();
-  }, [owner.accountLine, ownerId]);
-
   const handleViewHistory = (pet) => {
     setSelectedPet(pet);
     setShowModal(true);
@@ -84,7 +56,7 @@ export default function PetCards() {
       navigate("/");
     }
     const timer = setTimeout(() => {
-      localStorage.removeItem("token");
+      localStorage.clear();
       notification.warning({
         message: "Session Expired",
         description: "หมดเวลาเซสชั่น 1 ชั่วโมง กรุณาเข้าสู่ระบบใหม่",
@@ -105,6 +77,33 @@ export default function PetCards() {
       setLoading(false);
     };
     loadData();
+  }, [ownerId]);
+
+  useEffect(() => {
+    const initializeLiff = async () => {
+      try {
+        const ownerData = await fetchedOwnerByID(ownerId);
+        console.log(ownerData);
+        if (
+          ownerData.accountLine ||
+          Object.keys(ownerData.accountLine).length === 0
+        ) {
+          setModal2Open(false);
+        } else {
+          if (!liff.isLoggedIn()) {
+            await liff.init({ liffId: "2006562622-GXpWdRRO" });
+            setModal2Open(true); // Open modal
+            const profile = await liff.getProfile(); // Get profile from LINE
+            await insetAccountLineInfirebase(ownerId, profile); // Save to Firebase
+            setModal2Open(false); // Close modal
+          }
+        }
+      } catch (err) {
+        console.log("Error during LIFF initialization or login:", err);
+      }
+    };
+
+    initializeLiff();
   }, [ownerId]);
 
   const handleLoginLine = async () => {
@@ -171,7 +170,15 @@ export default function PetCards() {
                 </Title>
               </div>
             </div>
-            <Button type="primary" danger onClick={logout} block>
+            <Button
+              type="primary"
+              danger
+              onClick={() => {
+                logout();
+                navigate("/");
+              }}
+              block
+            >
               ออกจากระบบ
             </Button>
           </div>
@@ -199,9 +206,9 @@ export default function PetCards() {
           width="90%"
           style={{ maxWidth: "1000px" }}
         >
-          {/* Table inside Modal */}
-          <div className="bg-pink-100 rounded-lg p-6">
-            <table className="min-w-full table-auto border-collapse border border-pink-200">
+          {/* Wrapper div for responsive table */}
+          <div className="bg-pink-100 rounded-lg p-6 overflow-x-auto">
+            <table className="min-w-full md:min-w-[1000px] table-auto border-collapse border border-pink-200">
               <thead>
                 <tr className="bg-pink-200">
                   <th className="px-4 py-2 border border-pink-300">
@@ -226,7 +233,7 @@ export default function PetCards() {
                     นัดครั้งถัดไป
                   </th>
                   <th className="px-4 py-2 border border-pink-300">
-                    ฉลากวัดคซีน
+                    ฉลากวัคซีน
                   </th>
                   <th className="px-4 py-2 border border-pink-300">หมายเหตุ</th>
                 </tr>
@@ -271,7 +278,7 @@ export default function PetCards() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="text-center w-full h-[50px]">
+                    <td colSpan="9" className="text-center w-full h-[50px]">
                       ไม่มีข้อมูลการรักษา
                     </td>
                   </tr>
@@ -313,9 +320,14 @@ export default function PetCards() {
                   เพิ่มเพื่อน
                 </Text>
               </div>
-              <Text style={{ color: "#7f8c8d", marginBottom: "15px" }}>
-                กรุณาเพิ่มเพื่อนใน LINE เพื่อรับข่าวสารการนัดหมาย
-              </Text>
+              <div className="flex flex-col">
+                <Text style={{ color: "#7f8c8d", marginBottom: "0px" }}>
+                  กรุณาเพิ่มเพื่อนใน LINE
+                </Text>
+                <Text style={{ color: "#7f8c8d", marginBottom: "5px" }}>
+                  เพื่อรับข่าวสารการนัดหมาย
+                </Text>
+              </div>
               <Image
                 src="/QRCODE2.png"
                 width={150}

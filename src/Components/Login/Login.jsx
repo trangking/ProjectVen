@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth"; // import Firebase authentication
 import { auth, db } from "../../firebase/firebase"; // นำเข้า auth จาก Firebase
 import useStore from "../../store"; // import useStore
 import { doc, getDoc } from "firebase/firestore";
+import { Button } from "antd";
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -32,6 +33,8 @@ function Login() {
         localStorage.setItem("token", token);
         console.log("Token ถูกบันทึกลงใน localStorage:", token);
         localStorage.setItem("Id", userId);
+        console.log(userId);
+
         navigate("/pageAdmin"); // ถ้าเป็นแอดมินให้ไปที่หน้า Admin
       } else {
         const ownerDocRef = doc(db, "owners", userId);
@@ -125,7 +128,7 @@ function Login() {
             <input type="checkbox" className="w-4 h-4" />
             <span className="text-sm text-gray-600">Remember me</span>
           </label>
-          
+
           {/* <a href="#" className="text-sm text-blue-500 hover:underline">
             Forgot Password?
           </a> */}
@@ -137,13 +140,20 @@ function Login() {
         >
           Login
         </button>
-
-        <p className="text-center mt-6 text-gray-600">
-          Don't have an account?{" "}
-          {/* <a href="#" className="text-blue-500 font-medium hover:underline">
-            Register
-          </a> */}
-        </p>
+        <Link to={"/loading"}>
+          <Button
+            className="w-full py-3 mt-8  bg-[#51e151] hover:bg-[#00a700] text-white font-semibold text-lg transition-all duration-300"
+            size="large"
+            // bg-[#51e151] hover:bg-[#00a700] text-white font-semibold text-lg transition-all duration-300
+          >
+            <img
+              src="/line_icon.ico"
+              alt="LINE Icon"
+              className="w-6 h-6 mr-3"
+            />
+            เข้าสู่ระบบด้วย LINE
+          </Button>
+        </Link>
       </form>
     </div>
   );

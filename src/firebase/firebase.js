@@ -974,10 +974,6 @@ const calculateAndUpdateAge = async (petId, petData) => {
 };
 
 const insetAccountLineInfirebase = async (ownerID, profile) => {
-  console.log(ownerID);
-  console.log(profile);
-
-
   const ownerDocRef = doc(db, "owners", ownerID);
   await updateDoc(ownerDocRef, {
     accountLine: profile

@@ -208,3 +208,57 @@ img {
     font-size: 2rem;
   }
 }
+
+/* เพิ่ม CSS สำหรับ loading screen */
+
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #f3f4f6; /* สีพื้นหลังอ่อน */
+  color: #4b5563; /* สีข้อความ */
+}
+
+.loading-logo img {
+  width: 178px;
+  height: 107px;
+  margin-bottom: 20px;
+  animation: bounce 1.5s infinite; /* การเคลื่อนไหวสำหรับโลโก้ */
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 6px solid #d1d5db;
+  border-top-color: #4b9c4c; /* สีเขียวเข้มของมหาวิทยาลัยแม่โจ้ */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+.loading-text {
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  color: #1f2937; /* สีเข้มสำหรับข้อความ */
+}
+
+/* Animation สำหรับ spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Animation สำหรับ bounce */
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}

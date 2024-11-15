@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { message } from "antd";
 
 const useStore = create((set) => ({
   firstName: "",
@@ -66,7 +67,7 @@ const useStore = create((set) => ({
     localStorage.removeItem("token");
     localStorage.clear()
     set({ token: "" }); // เคลียร์ token ใน zustand ด้วย
-    console.log("Logged out successfully");
+    message.success("ออกจากระบบสำเร็จ")
   },
 }));
 
