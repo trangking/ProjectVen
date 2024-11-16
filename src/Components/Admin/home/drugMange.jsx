@@ -26,7 +26,7 @@ export default function DrugManage() {
 
   // ฟังก์ชันสำหรับเพิ่มวัคซีน
   const handleAddVaccine = async () => {
-    if (!newVaccine.name || !newVaccine.image) {
+    if (!newVaccine.name) {
       console.log("กรุณากรอกข้อมูลให้ครบถ้วน");
       return;
     }
@@ -57,27 +57,27 @@ export default function DrugManage() {
       key: "name",
       render: (text) => <strong>{text}</strong>,
     },
-    {
-      title: "รูปภาพ",
-      dataIndex: "vaccineImage",
-      key: "image",
-      render: (image) =>
-        image ? (
-          <img
-            src={image} // ใช้ URL ของรูปภาพจาก Firebase Storage
-            alt="vaccine"
-            style={{
-              width: "100px",
-              height: "70px",
-              objectFit: "cover",
-              borderRadius: "4px",
-              border: "1px solid #d9d9d9",
-            }}
-          />
-        ) : (
-          <span>ไม่มีรูป</span>
-        ),
-    },
+    // {
+    //   title: "รูปภาพ",
+    //   dataIndex: "vaccineImage",
+    //   key: "image",
+    //   render: (image) =>
+    //     image ? (
+    //       <img
+    //         src={image} // ใช้ URL ของรูปภาพจาก Firebase Storage
+    //         alt="vaccine"
+    //         style={{
+    //           width: "100px",
+    //           height: "70px",
+    //           objectFit: "cover",
+    //           borderRadius: "4px",
+    //           border: "1px solid #d9d9d9",
+    //         }}
+    //       />
+    //     ) : (
+    //       <span>ไม่มีรูป</span>
+    //     ),
+    // },
     {
       title: "การจัดการ",
       key: "action",
@@ -169,7 +169,6 @@ export default function DrugManage() {
             }
 
             setUploading(true); // เริ่มแสดง loading
-            // Simulate upload delay with setTimeout, replace with real upload logic
             setTimeout(() => {
               setNewVaccine({ ...newVaccine, image: file });
               setUploading(false); // หยุด loading

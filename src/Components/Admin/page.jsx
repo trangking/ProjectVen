@@ -12,17 +12,17 @@ import useStore from "../../store"; // นำเข้า useStore
 // ลิงก์ของ Sidebar
 const sidebarLinks = [
   {
-    name: "การนัดหมาย",
+    name: "จัดการการนัดหมาย",
     path: "Dashboard",
     icon: <CalendarIcon className="h-6 w-6" />,
   },
   {
-    name: "จัดการข้อมูล",
+    name: "จัดการข้อมูลผู้ใช้งานและสัตว์เลี้ยง",
     path: "PageManage",
     icon: <UserGroupIcon className="h-6 w-6" />,
   },
   {
-    name: "วัคซีน",
+    name: "จัดการวัคซีน",
     path: "DrugManage",
     icon: <FaMedkit className="h-6 w-6" />,
   },

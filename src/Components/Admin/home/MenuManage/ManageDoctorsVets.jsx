@@ -163,7 +163,7 @@ export default function ManageDoctorsVets() {
       key: "PhoneDoctor",
     },
     {
-      title: "ประกาศนียบัตรการแพทย์",
+      title: "ใบรับรองคุณวุฒิทางการแพทย์",
       dataIndex: "Medical_license",
       key: "Medical_license",
       render: (text, record) =>
@@ -183,7 +183,7 @@ export default function ManageDoctorsVets() {
         ),
     },
     {
-      title: "เลขใบประกอบวิชาชีพ",
+      title: "เลขที่ใบอนุญาตประกอบวิชาชีพ",
       dataIndex: "Animal_Registration_Number",
       key: "Animal_Registration_Number",
     },
@@ -314,7 +314,7 @@ export default function ManageDoctorsVets() {
           }
         />
         <Input
-          placeholder="เลขบัตรอนุญาติวิชาชีพ"
+          placeholder="เลขที่ใบอนุญาตประกอบวิชาชีพ"
           className="mb-4"
           value={newDoctor.Animal_Registration_Number}
           onChange={(e) =>
@@ -338,7 +338,7 @@ export default function ManageDoctorsVets() {
           className="w-full"
         >
           <Button icon={<UploadOutlined />}>
-            อัปโหลดใบประกอบอนุญาติวิชาการสัตว์แพทย์
+            อัปโหลดใบรับรองคุณวุฒิทางการแพทย์
           </Button>
         </Upload>
       </Modal>

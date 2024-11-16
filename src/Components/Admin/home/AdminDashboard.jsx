@@ -5,6 +5,8 @@ import {
   GetAddPointMentBytrue,
   confirmAppointment,
   GetAddPointMentByCannel,
+  fetchedAddPointMentTimeandDate,
+  upDateAppointmentDate,
 } from "../../../firebase/firebase";
 import {
   Table,
@@ -14,9 +16,12 @@ import {
   Statistic,
   message,
   Spin,
+  Modal,
+  Form,
+  DatePicker,
+  TimePicker,
 } from "antd";
-
-
+import moment from "moment";
 
 export default function AdminDashboard() {
   const [searchTermPet, setSearchTermPet] = useState("");
@@ -28,7 +33,11 @@ export default function AdminDashboard() {
   const [appointmentCanel, setappointmentCanel] = useState([]);
   const [AppointmentsType, setAppointmentsType] = useState("ดูการนัดทั้งหมด");
   const [loading, setLoading] = useState(false);
-
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [currentAppointment, setCurrentAppointment] = useState(null);
+  const [form] = Form.useForm();
+  const [edittime, setEdittime] = useState(null);
+  const [editDateAp, seteditDateAp] = useState(null);
   useEffect(() => {
     const fetchAppointment = async () => {
       setLoading(true); // เริ่มแสดง loading
@@ -63,17 +72,41 @@ export default function AdminDashboard() {
     setLoading(false); // หยุดแสดง loading เมื่ออัปเดตเสร็จ
   };
 
+  const openEditModal = async (apID) => {
+    setEditModalVisible(true);
+    try {
+      const res = await fetchedAddPointMentTimeandDate(apID);
+      setCurrentAppointment(res); // ใช้รายการแรกที่พบ
+      form.setFieldsValue({
+        date: moment(res[0].nextAppointmentDate),
+        time: moment(res[0].timeNextAppointment, "HH:mm"),
+      });
+      // เปิด Modal
+    } catch (err) {
+      console.error("Error opening modal:", err);
+    }
+  };
+
   const columns = [
     {
+      title: "รหัสสัตว์เลี้ยง",
+      dataIndex: ["pet", "0", "NumberPet"],
+      key: "petName",
+    },
+    {
       title: "ชื่อสัตว์เลี้ยง",
-      render: (text, record) =>
-        `${record.pet[0].name}/ ${record.pet[0].subType} / ${record.pet[0].NumberPet} `,
+      dataIndex: ["pet", "0", "subType"],
+      key: "petName",
+    },
+    {
+      title: "สายพันธุ์",
+      dataIndex: ["pet", "0", "name"],
       key: "petName",
     },
     {
       title: "เจ้าของ",
       render: (text, record) =>
-        `${record.owner[0].name} / ${record.owner[0].lastname}`,
+        `${record.owner[0].name}  ${record.owner[0].lastname}`,
       key: "owner",
     },
     {
@@ -100,7 +133,7 @@ export default function AdminDashboard() {
       title: "สถานะ",
       dataIndex: "status",
       key: "status",
-      render: (status) => (status ? "มาตามนัด" : "กำลังมา"),
+      render: (status) => (status ? "มาตามนัด" : "รอการยืนยันจากเจ้าของ"),
     },
     {
       title: "การจัดการ",
@@ -121,6 +154,15 @@ export default function AdminDashboard() {
               disabled={loading} // ปิดการใช้งานปุ่มระหว่างโหลด
             >
               ยันนัดหมาย
+            </Button>
+            <Button
+              color="default"
+              variant="solid"
+              onClick={() => openEditModal(appointment.id)} // ส่งค่า true สำหรับการยืนยัน
+              style={{ marginRight: "8px" }}
+              disabled={loading} // ปิดการใช้งานปุ่มระหว่างโหลด
+            >
+              เลื่อนการยันนัดหมาย
             </Button>
 
             <Button
@@ -161,6 +203,58 @@ export default function AdminDashboard() {
       numberPet.includes(searchTermNubmerPet.toLowerCase())
     );
   });
+
+  const handleSave = async () => {
+    console.log(editDateAp);
+    console.log(edittime);
+    console.log(currentAppointment.id);
+
+    try {
+      if (!editDateAp || !edittime) {
+        return message.error("กรุณาเลือกวันที่และเวลา");
+      }
+      const nextAppointmentDate = editDateAp; // ใช้ค่า `editDateAp` ที่ตั้งไว้
+      const selectedTime = edittime; // ใช้ค่า `edittime` ที่ตั้งไว้
+      if (currentAppointment?.id) {
+        // อัปเดตข้อมูลการนัดหมาย
+        await upDateAppointmentDate(
+          currentAppointment.id,
+          nextAppointmentDate,
+          selectedTime
+        );
+        message.success("แก้ไขวันและเวลาการนัดหมายสำเร็จ");
+
+        // ปิด Modal และรีเฟรชข้อมูล
+        setEditModalVisible(false);
+        setCurrentAppointment(null);
+        seteditDateAp(null);
+        setEdittime(null);
+
+        // รีเฟรชข้อมูลตาราง
+        const fetchedAppointments = await fetchedAddPointMent();
+        setAppointments(fetchedAppointments);
+      }
+    } catch (error) {
+      console.error("Error saving appointment:", error);
+      message.error("เกิดข้อผิดพลาดในการแก้ไขการนัดหมาย");
+    }
+  };
+
+  const handleCancel = () => {
+    // ปิด Modal และรีเซ็ตตัวแปร
+    setEditModalVisible(false);
+    setCurrentAppointment(null);
+    seteditDateAp(null);
+    setEdittime(null);
+  };
+
+  const handleTimeChange = (time) => {
+    if (time) {
+      setEdittime(time);
+    } else {
+      setEdittime(null);
+    }
+  };
 
   return (
     <>
@@ -231,6 +325,29 @@ export default function AdminDashboard() {
           loading={loading} // แสดงสถานะโหลดในตารางเมื่อโหลดข้อมูล
         />
       </div>
+
+      <Modal visible={editModalVisible} title="แก้ไขการนัดหมาย" footer={false}>
+        <Form form={form} layout="vertical">
+          <Form.Item
+            name="date"
+            label="วันที่"
+            rules={[{ required: true, message: "กรุณาเลือกวันที่" }]}
+          >
+            <DatePicker
+              onChange={(date, dateString) => seteditDateAp(dateString)}
+            />
+          </Form.Item>
+          <Form.Item
+            name="time"
+            label="เวลา"
+            rules={[{ required: true, message: "กรุณาเลือกเวลา" }]}
+          >
+            <TimePicker format="HH:mm" onChange={handleTimeChange} />
+          </Form.Item>
+          <Button onClick={handleSave}>ยืนการแก้ไข</Button>
+          <Button onClick={handleCancel}>ยกเลิก</Button>
+        </Form>
+      </Modal>
     </>
   );
 }

@@ -15,6 +15,7 @@ import {
   arrayRemove,
   orderBy,
   serverTimestamp,
+  limit
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import {
@@ -75,7 +76,7 @@ const fetchedPets = async () => {
       return {
         id: doc.id,
         ...doc.data(),
-        age, // เพิ่มฟิลด์อายุที่คำนวณแล้ว
+        age,
         owner: ownerData ? ownerData.name : "Unknown",
       };
     })
@@ -105,11 +106,25 @@ const fetchedOwnerByID = async (ownerID) => {
 // Add pet to Firebase
 const addPetToFirebase = async (pet) => {
   try {
-    const docRef = await addDoc(collection(db, "pets"), {
+    // ดึง `NumberPet` สูงสุดจากคอลเล็กชัน `pets`
+    const petsRef = collection(db, "pets");
+    const q = query(petsRef, orderBy("NumberPet", "desc"), limit(1)); // ดึงสัตว์เลี้ยงที่มี NumberPet สูงสุด
+    const snapshot = await getDocs(q);
+
+    let nextNumberPet = 1; // ค่าเริ่มต้นกรณีไม่มีสัตว์เลี้ยงในระบบ
+
+    if (!snapshot.empty) {
+      const lastPet = snapshot.docs[0].data();
+      nextNumberPet = lastPet.NumberPet + 1; // เพิ่มค่า NumberPet ถัดไป
+    }
+
+    // เพิ่มสัตว์เลี้ยงใหม่พร้อม NumberPet ใหม่
+    const docRef = await addDoc(petsRef, {
       ...pet,
       createdAt: new Date(),
-      NumberPet: Math.floor(Math.random() * 1000) + 1,
+      NumberPet: nextNumberPet,
     });
+
     return docRef.id; // คืนค่า id ของสัตว์เลี้ยงที่สร้างขึ้น
   } catch (error) {
     console.error("Error adding pet: ", error);
@@ -128,6 +143,7 @@ const updatePetInFirebase = async (petId, updatedPetData) => {
 };
 
 const AddOwner = async (
+  prefix,
   firstName,
   lastnameOwner,
   addEmailMember,
@@ -147,6 +163,7 @@ const AddOwner = async (
       addPassword
     );
     const newOwnerData = {
+      prefix: prefix,
       name: firstName,
       lastnameOwner: lastnameOwner,
       password: addPassword,
@@ -404,10 +421,10 @@ const AddVaccine = async (newVaccine, img) => {
   }
   const type = "vaccine";
 
-  if (!newVaccine.image) {
-    console.error("ไม่มีรูปภาพ");
-    return console.log("กรุณาอัพโหลดรูปภาพ");
-  }
+  // if (!newVaccine.image) {
+  //   console.error("ไม่มีรูปภาพ");
+  //   return console.log("กรุณาอัพโหลดรูปภาพ");
+  // }
 
   const uploadedImageUrl = await uploadImage(newVaccine.image, type);
 
@@ -752,6 +769,25 @@ const fetchedAddPointMent = async () => {
   }
 };
 
+const fetchedAddPointMentTimeandDate = async (apID) => {
+  try {
+    // Reference the specific document by doctorID
+    const docRef = doc(db, "appointment", apID);
+    const snapshot = await getDoc(docRef);
+
+    if (snapshot.exists()) {
+      // Return the data along with the ID
+      return { id: snapshot.id, ...snapshot.data() };
+    } else {
+      console.log("Doctor document not found.");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching doctor data:", error);
+    return null;
+  }
+};
+
 const fetchedAddPointMentBydoctorID = async (doctorID) => {
   try {
     const colRef = collection(db, "appointment");
@@ -945,22 +981,36 @@ const fetchedPetsByID = async (ownerID) => {
 };
 
 const calculateAndUpdateAge = async (petId, petData) => {
-  const { years, months, createdAt } = petData;
+  const { years = 0, months = 0, createdAt } = petData;
 
-  const createdDate = createdAt.toDate(); // แปลงเป็นวันที่
+  if (!createdAt || typeof createdAt.toDate !== "function") {
+    console.error(`Invalid or missing createdAt for petId: ${petId}`);
+    return `${years} ปี ${months} เดือน`;
+  }
+
+  const createdDate = createdAt.toDate(); // แปลง `createdAt` เป็นวันที่
+
+  // จำลองให้เวลาผ่านไป 6 เดือน
   const now = new Date();
-  const diffYears = now.getFullYear() - createdDate.getFullYear();
-  const diffMonths = now.getMonth() - createdDate.getMonth();
+  // ถ้าอยากทำสอบให้จารย์เห็นการเปลี่ยนของเลข เดือน และ ปี ให้เพิ่ม เลข1 หรือ 12
+  // now.setMonth(now.getMonth() + 12);
+
+  let diffYears = now.getFullYear() - createdDate.getFullYear();
+  let diffMonths = now.getMonth() - createdDate.getMonth();
+
+  // จัดการกรณีเดือนติดลบ
+  if (diffMonths < 0) {
+    diffYears -= 1; // ยืมปี
+    diffMonths += 12; // เพิ่มเดือนจากปีที่ยืมมา
+  }
 
   let updatedYears = years + diffYears;
   let updatedMonths = months + diffMonths;
 
+  // แก้ไขเงื่อนไขการรีเซ็ตเดือนเมื่อครบ 12 เดือน
   if (updatedMonths >= 12) {
-    updatedYears += Math.floor(updatedMonths / 12);
-    updatedMonths = updatedMonths % 12;
-  } else if (updatedMonths < 0) {
-    updatedYears -= 1;
-    updatedMonths += 12;
+    updatedYears += Math.floor(updatedMonths / 12); // เพิ่มปี
+    updatedMonths = 0;
   }
 
   // อัปเดตอายุใน Firestore
@@ -972,6 +1022,7 @@ const calculateAndUpdateAge = async (petId, petData) => {
 
   return `${updatedYears} ปี ${updatedMonths} เดือน`;
 };
+
 
 const insetAccountLineInfirebase = async (ownerID, profile) => {
   const ownerDocRef = doc(db, "owners", ownerID);
@@ -997,6 +1048,40 @@ const sendAppointMentInLine = (userId, nextAppointmentDate, petName) => {
     console.log(err);
   }
 }
+
+const upDateAppointmentDate = async (apID, nextAppointmentDate, selectedTime) => {
+  if (!nextAppointmentDate || !selectedTime) {
+    return message.error("กรุณากรอกเวลาและวันที่การนัดหมาย");
+  }
+
+  // const formattedDate = nextAppointmentDate.format("YYYY-MM-DD");
+  // const formattedTime = selectedTime.format("HH:mm");
+  console.log(nextAppointmentDate);
+  console.log(selectedTime);
+  const timeNextAppointment = new Date(selectedTime); // แปลง selectedTime เป็น Date
+
+  // ดึงเฉพาะเวลา (ชั่วโมง:นาที) จาก Date
+  const hours = timeNextAppointment.getHours();
+  const minutes = timeNextAppointment.getMinutes();
+
+  // รูปแบบเวลาเป็น "HH:MM"
+  const formattedTime = `${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}`;
+  console.log(formattedTime);
+
+  try {
+    const apDocRef = doc(db, "appointment", apID);
+    await updateDoc(apDocRef, {
+      nextAppointmentDate: nextAppointmentDate,
+      TimeAppoinMentDate: formattedTime,
+    });
+    message.success("แก้ไขการนัดหมายเรียบร้อยแล้ว");
+  } catch (error) {
+    console.error("Error updating appointment:", error);
+    message.error("ไม่สามารถแก้ไขการนัดหมายได้");
+  }
+};
 
 export {
   AddOwner,
@@ -1029,6 +1114,8 @@ export {
   deleteDoctor,
   fetchedOwnerByID,
   insetAccountLineInfirebase,
+  upDateAppointmentDate,
+  fetchedAddPointMentTimeandDate,
   auth,
   db,
   storage,

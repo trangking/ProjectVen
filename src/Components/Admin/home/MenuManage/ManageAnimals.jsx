@@ -10,7 +10,7 @@ import useStore from "../../../../store";
 import { LoadingOutlined, SearchOutlined } from "@ant-design/icons";
 
 const { Option } = Select;
-const exoticBreeds = ["Snake", "Lizard", "Tortoise", "Parrot"];
+const exoticBreeds = ["งู", "กิ้งก่า", "เต่า", "กระต่าย"];
 
 export default function ManageAnimals() {
   const newPet = useStore((state) => state.newPet);
@@ -102,9 +102,15 @@ export default function ManageAnimals() {
 
   const columns = [
     {
+      title: "รหัสสัตว์เลี้ยง",
+      dataIndex: "NumberPet",
+      key: "petName",
+      align: "center",
+    },
+    {
       title: "ชื่อ",
       key: "name",
-      render: (text, record) => `${record.name} / ${record.NumberPet}`,
+      dataIndex: "name",
     },
     { title: "ประเภท", dataIndex: "type", key: "type" },
     { title: "สี", dataIndex: "color", key: "color" },
@@ -212,13 +218,13 @@ export default function ManageAnimals() {
                     onChange={(value) => setNewPet({ ...newPet, type: value })}
                     className="mt-1 w-full  border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition"
                   >
-                    <Option value="Dog">หมา</Option>
-                    <Option value="Cat">แมว</Option>
-                    <Option value="Exotic">สัตว์เอ็กโซติก</Option>
+                    <Option value="สุนัข">สุนัข</Option>
+                    <Option value="แมว">แมว</Option>
+                    <Option value="สัตว์เอ็กโซติก">สัตว์เอ็กโซติก</Option>
                   </Select>
                 </div>
 
-                {newPet.type !== "Exotic" && (
+                {newPet.type !== "สัตว์เอ็กโซติก" && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       พันธุ์สัตว์
@@ -234,7 +240,7 @@ export default function ManageAnimals() {
                   </div>
                 )}
 
-                {newPet.type === "Exotic" && (
+                {newPet.type === "สัตว์เอ็กโซติก" && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       พันธุ์สัตว์

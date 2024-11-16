@@ -24,6 +24,7 @@ function AddOwnerModal({ isOpen, onClose, pets, owners, setOwners }) {
   const setPhoneMember = useStore((state) => state.setPhoneMember);
   const addAddressMember = useStore((state) => state.addAddressMember);
   const setAddressMember = useStore((state) => state.setAddressMember);
+  const [prefixMember, setPrefixmember] = useState("");
 
   const handleAddOwner = async () => {
     if (
@@ -39,6 +40,7 @@ function AddOwnerModal({ isOpen, onClose, pets, owners, setOwners }) {
 
     try {
       await AddOwner(
+        prefixMember,
         firstName,
         lastnameOwner,
         addEmailMember,
@@ -78,6 +80,21 @@ function AddOwnerModal({ isOpen, onClose, pets, owners, setOwners }) {
         </h2>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">
+              คำนำหน้า
+            </label>
+            <Select
+              placeholder="กรุณาเลือกคำหน้า"
+              className="w-full"
+              value={prefixMember}
+              onChange={(value) => setPrefixmember(value)}
+            >
+              <Select.Option value="นาย">นาย</Select.Option>
+              <Select.Option value="นางสาว">นางสาว</Select.Option>
+              <Select.Option value="นาง">นาง</Select.Option>
+            </Select>
+          </div>
           <div>
             <label className="block text-gray-700 font-semibold mb-2">
               ชื่อเจ้าของ
@@ -500,6 +517,11 @@ export default function ManageOwners() {
 
   const columns = [
     {
+      title: "คำนำหน้า",
+      dataIndex: "prefix",
+      key: "prefix",
+    },
+    {
       title: "ชื่อ",
       dataIndex: "name",
       key: "name",
@@ -518,6 +540,11 @@ export default function ManageOwners() {
       title: "เบอร์โทรศัพท์",
       dataIndex: "phone",
       key: "phone",
+    },
+    {
+      title: "ทีอยู่",
+      dataIndex: "address",
+      key: "address",
     },
     {
       title: "การจัดการ",
