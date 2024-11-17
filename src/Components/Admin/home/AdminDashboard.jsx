@@ -91,17 +91,17 @@ export default function AdminDashboard() {
     {
       title: "รหัสสัตว์เลี้ยง",
       dataIndex: ["pet", "0", "NumberPet"],
-      key: "petName",
+      key: "NumberPet",
     },
     {
       title: "ชื่อสัตว์เลี้ยง",
-      dataIndex: ["pet", "0", "subType"],
+      dataIndex: ["pet", "0", "name"],
       key: "petName",
     },
     {
       title: "สายพันธุ์",
-      dataIndex: ["pet", "0", "name"],
-      key: "petName",
+      dataIndex: ["pet", "0", "subType"],
+      key: "subType",
     },
     {
       title: "เจ้าของ",

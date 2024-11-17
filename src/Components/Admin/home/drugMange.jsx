@@ -10,7 +10,11 @@ import {
 
 export default function DrugManage() {
   const [vaccineData, setVaccineData] = useState([]);
-  const [newVaccine, setNewVaccine] = useState({ name: "", image: null });
+  const [newVaccine, setNewVaccine] = useState({
+    name: "",
+    image: null,
+    vaccinedecs: "",
+  });
   const [editVaccine, setEditVaccine] = useState(null);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -55,6 +59,12 @@ export default function DrugManage() {
       title: "ชื่อวัคซีน",
       dataIndex: "vaccineName",
       key: "name",
+      render: (text) => <strong>{text}</strong>,
+    },
+    {
+      title: "รายละเอียดวัคซีน",
+      dataIndex: "vaccineDes",
+      key: "vaccineDes",
       render: (text) => <strong>{text}</strong>,
     },
     // {
@@ -159,7 +169,17 @@ export default function DrugManage() {
           }
           style={{ marginBottom: 16 }}
         />
-        <Upload
+        <Input
+          placeholder="รายละเอียดวัคซีน"
+          value={newVaccine.vaccinedecs}
+          onChange={(e) =>
+            setNewVaccine({ ...newVaccine, vaccinedecs: e.target.value })
+          }
+          showCount
+          maxLength={100}
+          style={{ height: 120, resize: "none", marginBottom: 16 }}
+        />
+        {/* <Upload
           beforeUpload={(file) => {
             const isJpgOrPng =
               file.type === "image/jpeg" || file.type === "image/png";
@@ -180,15 +200,14 @@ export default function DrugManage() {
           showUploadList={false}
         >
           <Button icon={<UploadOutlined />}>อัพโหลดรูปภาพ (JPG/PNG)</Button>
-        </Upload>
-        {/* แสดง loading หรือติ๊กถูกตามสถานะ */}
-        {uploading && <Spin style={{ marginTop: 16 }} />} {/* Loading */}
+        </Upload> */}
+
+        {/* {uploading && <Spin style={{ marginTop: 16 }} />}
         {uploadComplete && !uploading && (
           <CheckCircleOutlined
             style={{ color: "green", fontSize: 24, marginTop: 16 }}
           />
-        )}{" "}
-        {/* ติ๊กถูก */}
+        )} */}
       </Modal>
 
       {/* Modal สำหรับแก้ไขวัคซีน */}
@@ -209,7 +228,17 @@ export default function DrugManage() {
             }
             style={{ marginBottom: 16 }}
           />
-          <Upload
+          <Input
+            placeholder="รายละเอียดวัคซีน"
+            value={editVaccine.vaccineDes}
+            onChange={(e) =>
+              setEditVaccine({ ...editVaccine, vaccineDes: e.target.value })
+            }
+            showCount
+            maxLength={100}
+            style={{ height: 120, resize: "none", marginBottom: 16 }}
+          />
+          {/* <Upload
             beforeUpload={(file) => {
               const isJpgOrPng =
                 file.type === "image/jpeg" || file.type === "image/png";
@@ -235,7 +264,7 @@ export default function DrugManage() {
                 marginTop: 16,
               }}
             />
-          )}
+          )} */}
         </Modal>
       )}
     </div>

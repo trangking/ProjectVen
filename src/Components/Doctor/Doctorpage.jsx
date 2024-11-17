@@ -573,9 +573,9 @@ const Doctorpage = () => {
                     <th className="px-4 py-2 border border-pink-300">
                       นัดครั้งถัดไป
                     </th>
-                    <th className="px-4 py-2 border border-pink-300">
+                    {/* <th className="px-4 py-2 border border-pink-300">
                       ฉลากวัดคซีน
-                    </th>
+                    </th> */}
                     <th className="px-4 py-2 border border-pink-300">
                       หมายเหตุ
                     </th>
@@ -607,13 +607,13 @@ const Doctorpage = () => {
                         <td className="px-4 py-2 border border-pink-300">
                           {item.nextAppointmentDate}
                         </td>
-                        <td className="px-4 py-2 border border-pink-300 flex justify-center">
+                        {/* <td className="px-4 py-2 border border-pink-300 flex justify-center">
                           <img
                             src={item.vaccine.vaccineImage}
                             alt={`Sticker for ${item.vaccine.vaccineImage}`}
                             className="w-20 h-20 object-contain"
                           />
-                        </td>
+                        </td> */}
                         <td className="px-4 py-2 border border-pink-300">
                           {item.description}
                         </td>

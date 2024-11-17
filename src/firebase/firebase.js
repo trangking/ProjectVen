@@ -430,7 +430,8 @@ const AddVaccine = async (newVaccine, img) => {
 
   const NewVaccine = {
     vaccineName: newVaccine.name, // ใช้ newVaccine.name แทน namevaccine
-    vaccineImage: uploadedImageUrl, // URL รูปภาพที่อัปโหลด
+    vaccineImage: uploadedImageUrl,
+    vaccineDes: newVaccine.vaccinedecs // URL รูปภาพที่อัปโหลด
   };
 
   try {
@@ -451,6 +452,7 @@ const EditVaccine = async (vaccineId, updatedVaccine, img) => {
   try {
     // ตรวจสอบว่า updatedVaccine.vaccineName มีค่าหรือไม่ ถ้าไม่มีให้ใช้ชื่อเดิม
     const vaccineName = updatedVaccine.vaccineName || "ชื่อวัคซีนไม่ระบุ";
+
 
     // ใช้ URL ของรูปเดิมก่อน ถ้าไม่มีการเปลี่ยนรูปภาพ
     let uploadedImageUrl = updatedVaccine.vaccineImage;
@@ -478,7 +480,8 @@ const EditVaccine = async (vaccineId, updatedVaccine, img) => {
 
     const updatedData = {
       vaccineName,
-      vaccineImage: uploadedImageUrl, // ใช้ URL รูปใหม่หรือรูปเดิม
+      vaccineImage: uploadedImageUrl,
+      vaccineDes: updatedVaccine.vaccineDes// ใช้ URL รูปใหม่หรือรูปเดิม
     };
 
     // อัปเดตเอกสารใน Firestore
