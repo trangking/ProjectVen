@@ -115,14 +115,17 @@ const addPetToFirebase = async (pet) => {
 
     if (!snapshot.empty) {
       const lastPet = snapshot.docs[0].data();
-      nextNumberPet = lastPet.NumberPet + 1; // เพิ่มค่า NumberPet ถัดไป
+      nextNumberPet = parseInt(lastPet.NumberPet, 10) + 1; // เพิ่มค่า NumberPet ถัดไป
     }
+
+    // แปลงเลขให้เป็นรูปแบบ 0001, 0002, ...
+    const formattedNumberPet = nextNumberPet.toString().padStart(4, "0");
 
     // เพิ่มสัตว์เลี้ยงใหม่พร้อม NumberPet ใหม่
     const docRef = await addDoc(petsRef, {
       ...pet,
       createdAt: new Date(),
-      NumberPet: nextNumberPet,
+      NumberPet: formattedNumberPet,
     });
 
     return docRef.id; // คืนค่า id ของสัตว์เลี้ยงที่สร้างขึ้น
@@ -131,6 +134,7 @@ const addPetToFirebase = async (pet) => {
     return null;
   }
 };
+
 
 // Update pet in Firebase
 const updatePetInFirebase = async (petId, updatedPetData) => {
