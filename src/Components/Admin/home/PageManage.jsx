@@ -57,7 +57,7 @@ export default function Manage() {
           }`}
           onClick={() => handleMenuChange("doctors")}
         >
-          หมอ
+          สัตว์แพทย์
         </button>
       </div>
 

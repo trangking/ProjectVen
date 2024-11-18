@@ -38,6 +38,7 @@ export default function AdminDashboard() {
   const [form] = Form.useForm();
   const [edittime, setEdittime] = useState(null);
   const [editDateAp, seteditDateAp] = useState(null);
+
   useEffect(() => {
     const fetchAppointment = async () => {
       setLoading(true); // เริ่มแสดง loading
@@ -110,7 +111,7 @@ export default function AdminDashboard() {
       key: "owner",
     },
     {
-      title: "คุณหมอ",
+      title: "สัตว์แพทย์",
       dataIndex: "doctorName",
       key: "doctorName",
     },
@@ -149,7 +150,7 @@ export default function AdminDashboard() {
             <Button
               color="primary"
               variant="outlined"
-              onClick={() => confirmAddponitment(appointment.id, true)} // ส่งค่า true สำหรับการยืนยัน
+              onClick={() => confirmAddponitment(appointment.id, "ยืนยัน")} // ส่งค่า true สำหรับการยืนยัน
               style={{ marginRight: "8px" }}
               disabled={loading} // ปิดการใช้งานปุ่มระหว่างโหลด
             >
@@ -168,7 +169,7 @@ export default function AdminDashboard() {
             <Button
               color="danger"
               variant="outlined"
-              onClick={() => confirmAddponitment(appointment.id, false)} // ส่งค่า false สำหรับการยกเลิก
+              onClick={() => confirmAddponitment(appointment.id, "ยกเลิก")} // ส่งค่า false สำหรับการยกเลิก
               disabled={loading} // ปิดการใช้งานปุ่มระหว่างโหลด
             >
               ยกเลิกนัด
@@ -208,7 +209,6 @@ export default function AdminDashboard() {
     console.log(editDateAp);
     console.log(edittime);
     console.log(currentAppointment.id);
-
     try {
       if (!editDateAp || !edittime) {
         return message.error("กรุณาเลือกวันที่และเวลา");
@@ -222,6 +222,10 @@ export default function AdminDashboard() {
           nextAppointmentDate,
           selectedTime
         );
+
+        const isConfirmed = "แก้ไขการนัดหมาย";
+        await confirmAppointment(currentAppointment.id, isConfirmed);
+
         message.success("แก้ไขวันและเวลาการนัดหมายสำเร็จ");
 
         // ปิด Modal และรีเฟรชข้อมูล

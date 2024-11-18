@@ -80,11 +80,9 @@ function Login() {
         onSubmit={checkLogin} // ใช้ checkLogin เมื่อผู้ใช้กดปุ่ม Login
       >
         <h1 className="text-center text-4xl font-semibold text-gray-800 mb-6">
-          Welcome
+          สมุดวัคซีนสัตว์เลี้ยงออนไลร์
         </h1>
-        <p className="text-center text-gray-600 mb-10">
-          Sign in to your account
-        </p>
+        <p className="text-center text-gray-600 mb-10">กรุณาลงชื่อเข้าระบบ</p>
 
         <div className="space-y-6">
           {/* ช่องกรอกอีเมล */}
@@ -124,7 +122,7 @@ function Login() {
         <div className="flex justify-between items-center mt-6">
           <label className="flex items-center gap-2">
             <input type="checkbox" className="w-4 h-4" />
-            <span className="text-sm text-gray-600">Remember me</span>
+            <span className="text-sm text-gray-600">จดจำฉัน</span>
           </label>
 
           {/* <a href="#" className="text-sm text-blue-500 hover:underline">
@@ -136,7 +134,7 @@ function Login() {
           type="submit"
           className="w-full py-3 mt-8 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition"
         >
-          Login
+          เข้าสู่ระบบ
         </button>
         <Link to={"/loading"}>
           <Button

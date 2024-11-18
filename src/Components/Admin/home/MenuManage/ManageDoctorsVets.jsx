@@ -90,15 +90,15 @@ export default function ManageDoctorsVets() {
     try {
       if (editDoctorId) {
         await updateDoctorInFirebase(editDoctorId, newDoctor, img);
-        message.success("อัปเดตข้อมูลหมอสำเร็จ");
+        message.success("อัปเดตข้อมูลสัตว์แพทย์สำเร็จ");
       } else {
         await addNewDoctors(newDoctor, img);
-        message.success("เพิ่มหมอใหม่สำเร็จ");
+        message.success("เพิ่มสัตว์แพทย์ใหม่สำเร็จ");
       }
       closeModal();
       await loadDoctors(); // Ensure doctors are reloaded after saving
     } catch (error) {
-      message.error("เกิดข้อผิดพลาดในการบันทึกข้อมูลหมอ");
+      message.error("เกิดข้อผิดพลาดในการบันทึกข้อมูลสัตว์แพทย์");
     }
     setLoading(false);
   };
@@ -107,10 +107,10 @@ export default function ManageDoctorsVets() {
     setLoading(true);
     try {
       await deleteDoctor(doctorId);
-      message.success("ลบข้อมูลหมอสำเร็จ");
+      message.success("ลบข้อมูลสัตว์แพทย์สำเร็จ");
       await loadDoctors(); // Reload doctors after deletion
     } catch (error) {
-      message.error("เกิดข้อผิดพลาดในการลบข้อมูลหมอ");
+      message.error("เกิดข้อผิดพลาดในการลบข้อมูลสัตว์แพทย์");
     }
     setLoading(false);
   };
@@ -143,7 +143,7 @@ export default function ManageDoctorsVets() {
       key: "Prefix",
     },
     {
-      title: "ชื่อหมอ",
+      title: "ชื่อสัตว์แพทย์",
       dataIndex: "DoctorName",
       key: "DoctorName",
     },
@@ -221,7 +221,7 @@ export default function ManageDoctorsVets() {
   return (
     <div className="w-full min-h-screen p-10 flex flex-col items-center">
       <h1 className="text-4xl font-extrabold mb-12 text-yellow-800">
-        จัดการข้อมูลหมอ
+        จัดการข้อมูลสัตว์แพทย์
       </h1>
 
       <div className="flex justify-end mb-8 w-full max-w-6xl">
@@ -231,7 +231,7 @@ export default function ManageDoctorsVets() {
           style={{ backgroundColor: "#FFB02E", borderColor: "#FFB02E" }}
           className="rounded-lg"
         >
-          + เพิ่มหมอใหม่
+          + เพิ่มสัตว์แพทย์ใหม่
         </Button>
       </div>
 
@@ -252,7 +252,7 @@ export default function ManageDoctorsVets() {
       </div>
 
       <Modal
-        title={editDoctorId ? "แก้ไขข้อมูลหมอ" : "เพิ่มหมอใหม่"}
+        title={editDoctorId ? "แก้ไขข้อมูลสัตว์แพทย์" : "เพิ่มสัตว์แพทย์ใหม่"}
         visible={isModalOpen}
         onCancel={closeModal}
         onOk={handleSaveDoctor}
@@ -272,7 +272,7 @@ export default function ManageDoctorsVets() {
           ))}
         </Select>
         <Input
-          placeholder="ชื่อคุณหมอ"
+          placeholder="ชื่อคุณสัตว์แพทย์"
           className="mb-4"
           value={newDoctor.name}
           onChange={(e) => setNewDoctor({ ...newDoctor, name: e.target.value })}

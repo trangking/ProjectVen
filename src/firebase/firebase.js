@@ -1044,7 +1044,7 @@ const sendAppointMentInLine = (userId, nextAppointmentDate, petName) => {
   console.log("nextap  :", nextAppointmentDate);
   try {
     if (!userId || !nextAppointmentDate) {
-      return message.error("ไม่สามารถนัดหมายได้ เนื่องจากลูกค้าไม่ได้มีการเพิ่มเพื่อนทางไลร์")
+      return message.error("ไม่สามารถส่งข้อความได้เนื่องจากลูกค้าไม่ได้แอดไลร์")
     }
     axios.post("https://sentmessageappointmentline-production.up.railway.app/send", {
       userId: userId,

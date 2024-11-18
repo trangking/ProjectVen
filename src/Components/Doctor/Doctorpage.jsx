@@ -260,7 +260,7 @@ const Doctorpage = () => {
     <div className="manage-doctor">
       <div className="header bg-yellow-500 text-white p-4 text-center mb-4">
         <h1 className="text-3xl font-bold">
-          ตารางนัดของหมอ:{" "}
+          ตารางนัดของสัตว์แพทย์:{" "}
           {doctor && doctor.DoctorName ? doctor.DoctorName : "ค้นหาชื่อไม่เจอ"}
         </h1>
       </div>
@@ -268,7 +268,7 @@ const Doctorpage = () => {
       <div className="p-8">
         <Tabs defaultActiveKey="1">
           <TabPane tab="ตารางนัดหมาย" key="1">
-            <h2 className="text-2xl font-bold mb-4">ตารางนัดของหมอ</h2>
+            <h2 className="text-2xl font-bold mb-4">ตารางนัดของสัตว์แพทย์</h2>
 
             <Form layout="inline">
               <Form.Item name="date" label="เลือกวันที่">
@@ -285,9 +285,7 @@ const Doctorpage = () => {
               </Form.Item>
 
               <Form.Item>
-                <Link to={"/pageAdmin/Appointment"} target="blank">
-                  <Button type="primary">เพิ่มการนัดหมาย</Button>
-                </Link>
+                <Link to={"/pageAdmin/Appointment"} target="blank"></Link>
                 <Link to={"/"} className=" ml-4">
                   <Button
                     className=" bg-[#f50] text-white"
@@ -316,10 +314,14 @@ const Doctorpage = () => {
                     key: "time",
                   },
                   {
+                    title: "รหัสสัตว์เลี้ยง",
+                    dataIndex: ["pet", "0", "NumberPet"],
+                    key: "NumberPet",
+                  },
+                  {
                     title: "ชื่อสัตว์",
                     key: "name",
-                    render: (text, record) =>
-                      `${record.pet[0].name} / ${record.pet[0].NumberPet}`, // รวม name และ NumberPet
+                    render: (text, record) => `${record.pet[0].name} `, // รวม name และ NumberPet
                   },
                   {
                     title: "ประเภทสัตว์เลี้ยง",
@@ -354,9 +356,13 @@ const Doctorpage = () => {
                     render: (confirmStats) =>
                       confirmStats === null
                         ? "รอยืนยันการนัด"
-                        : confirmStats
+                        : confirmStats === "ยืนยัน"
                         ? "ยืนยันแล้ว"
-                        : "ยกเลิก",
+                        : confirmStats === "ยกเลิก"
+                        ? "ยกเลิก"
+                        : confirmStats === "แก้ไขการนัดหมาย"
+                        ? "เลื่อนการนัดหมาย"
+                        : "",
                   },
                   {
                     title: "สถานะการรักษา",
@@ -369,8 +375,16 @@ const Doctorpage = () => {
                     render: (text, record) => (
                       <div
                         style={{
-                          pointerEvents: !record.confirmStats ? "none" : "auto",
-                          opacity: !record.confirmStats ? 0.5 : 1,
+                          pointerEvents:
+                            record.confirmStats === "ยกเลิก" ||
+                            record.confirmStats === "แก้ไขการนัดหมาย"
+                              ? "none"
+                              : "auto",
+                          opacity:
+                            record.confirmStats === "ยกเลิก" ||
+                            record.confirmStats === "แก้ไขการนัดหมาย"
+                              ? 0.5
+                              : 1,
                         }}
                       >
                         <Button
@@ -409,10 +423,15 @@ const Doctorpage = () => {
               dataSource={filteredPets}
               columns={[
                 {
+                  title: "รหัสสัตว์เลี้ยง",
+                  key: "NumberPet",
+                  dataIndex: "NumberPet",
+                },
+                ,
+                {
                   title: "ชื่อสัตว์",
                   key: "name",
-                  render: (text, record) =>
-                    `${record.name} / ${record.NumberPet}`, // รวม name และ NumberPet
+                  render: (text, record) => `${record.name} `,
                 },
                 { title: "ประเภท", dataIndex: "type", key: "type" },
                 { title: "สายพันธุ์", dataIndex: "subType", key: "subType" },
@@ -562,7 +581,7 @@ const Doctorpage = () => {
                       วันที่ฉีดวัคซีน
                     </th>
                     <th className="px-4 py-2 border border-pink-300">
-                      หมอที่ทำการฉีดวัคซีน
+                      สัตว์แพทย์ที่ทำการฉีดวัคซีน
                     </th>
                     <th className="px-4 py-2 border border-pink-300">
                       เลขที่ใบอนุญาติ

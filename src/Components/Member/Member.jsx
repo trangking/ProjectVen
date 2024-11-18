@@ -101,9 +101,14 @@ export default function PetCards() {
 
   const columns = [
     {
+      title: "รหัสสัตว์เลี้ยง",
+      key: "NumberPet",
+      dataIndex: "NumberPet",
+    },
+    {
       title: "ชื่อสัตว์",
       key: "name",
-      render: (text, record) => `${record.name} / ${record.NumberPet}`,
+      render: (text, record) => `${record.name}`,
     },
     { title: "ประเภท", dataIndex: "type", key: "type" },
     { title: "สายพันธุ์", dataIndex: "subType", key: "subType" },
@@ -199,13 +204,16 @@ export default function PetCards() {
                     การฉีดวัคซีน
                   </th>
                   <th className="px-4 py-2 border border-pink-300">
+                    รายละเอียดวัคซีน
+                  </th>
+                  <th className="px-4 py-2 border border-pink-300">
                     หมายเลขชุดวัคซีน
                   </th>
                   <th className="px-4 py-2 border border-pink-300">
                     วันที่ฉีดวัคซีน
                   </th>
                   <th className="px-4 py-2 border border-pink-300">
-                    หมอที่ทำการฉีดวัคซีน
+                    สัตว์แพทย์ที่ทำการฉีดวัคซีน
                   </th>
                   <th className="px-4 py-2 border border-pink-300">
                     เลขที่ใบอนุญาติ
@@ -229,6 +237,9 @@ export default function PetCards() {
                     <tr key={index}>
                       <td className="px-4 py-2 border border-pink-300">
                         {item.vaccine.vaccineName}
+                      </td>
+                      <td className="px-4 py-2 border border-pink-300">
+                        {item.vaccine.vaccineDes}
                       </td>
                       <td className="px-4 py-2 border border-pink-300">
                         {item.No_vaccine}
