@@ -376,11 +376,13 @@ const Doctorpage = () => {
                       <div
                         style={{
                           pointerEvents:
+                            record.confirmStats === null ||
                             record.confirmStats === "ยกเลิก" ||
                             record.confirmStats === "แก้ไขการนัดหมาย"
                               ? "none"
                               : "auto",
                           opacity:
+                            record.confirmStats === null ||
                             record.confirmStats === "ยกเลิก" ||
                             record.confirmStats === "แก้ไขการนัดหมาย"
                               ? 0.5
