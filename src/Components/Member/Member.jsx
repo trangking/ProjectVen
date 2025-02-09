@@ -14,6 +14,8 @@ import {
 } from "antd";
 import useStore from "../../store";
 import { MenuOutlined } from "@ant-design/icons";
+import { render } from "@testing-library/react";
+import Modaleditpet from "../shared/modal-edit-pet";
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
 
@@ -30,6 +32,7 @@ export default function PetCards() {
   const [owner, setowner] = useState([]);
   const [modal2Open, setModal2Open] = useState(false);
   const [urlPicture, seturlPicture] = useState(null);
+  const [showEdit, setshowEdit] = useState(false);
 
   const handleViewHistory = (pet) => {
     setSelectedPet(pet);
@@ -39,6 +42,7 @@ export default function PetCards() {
   const handleCloseModal = () => {
     setShowModal(false);
     setSelectedPet(null);
+    setshowEdit(false);
   };
 
   const toggleDrawer = async () => {
@@ -99,6 +103,11 @@ export default function PetCards() {
     localStorage.setItem("OwnerID", ownerId);
   };
 
+  const handleEditpet = async (pet) => {
+    setSelectedPet(pet);
+    setshowEdit(true);
+  };
+
   const columns = [
     {
       title: "รหัสสัตว์เลี้ยง",
@@ -114,6 +123,13 @@ export default function PetCards() {
     { title: "สายพันธุ์", dataIndex: "subType", key: "subType" },
     { title: "อายุ (ปี)", dataIndex: "years", key: "years" },
     { title: "อายุ (เดือน)", dataIndex: "months", key: "months" },
+    {
+      title: "แก้ไข (ข้อมูลสัตว์)",
+      key: "editpet",
+      render: (text, record) => (
+        <Button onClick={() => handleEditpet(record)}>เปิด</Button>
+      ),
+    },
     {
       title: "ดูประวัติการรักษา",
       key: "GetTreatment",
@@ -185,6 +201,10 @@ export default function PetCards() {
             />
           </TabPane>
         </Tabs>
+
+        <Modal visible={showEdit} footer={null}>
+          <Modaleditpet newPet={selectedPet} closeModal={handleCloseModal} />
+        </Modal>
 
         {/* Modal for History */}
         <Modal

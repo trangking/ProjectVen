@@ -142,6 +142,7 @@ export default function AdminDashboard() {
       render: (appointment) => (
         <Spin spinning={loading}>
           <div
+            className="flex flex-row"
             style={{
               pointerEvents: appointment.status ? "none" : "auto",
               opacity: appointment.status ? 0.5 : 1,
@@ -166,14 +167,14 @@ export default function AdminDashboard() {
               เลื่อนการยันนัดหมาย
             </Button>
 
-            <Button
+            {/* <Button
               color="danger"
               variant="outlined"
               onClick={() => confirmAddponitment(appointment.id, "ยกเลิก")} // ส่งค่า false สำหรับการยกเลิก
-              disabled={loading} // ปิดการใช้งานปุ่มระหว่างโหลด
+              disabled={loading} 
             >
               ยกเลิกนัด
-            </Button>
+            </Button> */}
           </div>
         </Spin>
       ),

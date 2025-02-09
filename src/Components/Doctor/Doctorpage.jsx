@@ -24,6 +24,7 @@ import {
 import moment from "moment";
 import dayjs from "dayjs";
 import useStore from "../../store";
+import ModalEditPet from "../shared/modal-edit-pet";
 
 const { TabPane } = Tabs;
 const { Option } = Select;
@@ -55,6 +56,7 @@ const Doctorpage = () => {
   const [searchText, setSearchText] = useState("");
   const [filteredPets, setFilteredPets] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showEdit, setshowEdit] = useState(false);
 
   useEffect(() => {
     if (!doctor && !doctor.Name && !token) {
@@ -179,6 +181,7 @@ const Doctorpage = () => {
     setTreatmentsdec("");
     setNextAppointmentDate(null);
     setSelectedTime(null);
+    setshowEdit(false);
     form.resetFields(); // เรียก resetFields เป็นตัวสุดท้าย
   };
 
@@ -254,6 +257,11 @@ const Doctorpage = () => {
     } else {
       setFilteredPets(pets); // ถ้าช่องค้นหาว่าง แสดงข้อมูลทั้งหมด
     }
+  };
+
+  const handleEditpet = async (pet) => {
+    setSelectedPet(pet);
+    setshowEdit(true);
   };
 
   return (
@@ -448,6 +456,13 @@ const Doctorpage = () => {
                   key: "petstatus",
                 },
                 {
+                  title: "แก้ไข (ข้อมูลสัตว์)",
+                  key: "editpet",
+                  render: (text, record) => (
+                    <Button onClick={() => handleEditpet(record)}>เปิด</Button>
+                  ),
+                },
+                {
                   title: "ดูประวัติการรักษา",
                   key: "GetTreatment",
                   render: (text, record) => (
@@ -559,6 +574,9 @@ const Doctorpage = () => {
               </Form.Item>
             </Form>
           </Spin>
+        </Modal>
+        <Modal visible={showEdit} footer={null}>
+          <ModalEditPet newPet={selectedPet} closeModal={handleCancel} />
         </Modal>
 
         <Modal
